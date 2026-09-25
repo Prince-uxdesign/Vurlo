@@ -4,6 +4,7 @@ import { Archive, ArchiveRestore, BarChart3, Ban, Check, CircleCheck, Copy, Exte
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { setLinkStatusAction } from "@/app/(app)/links/actions";
+import { QrDialog } from "@/components/qr/qr-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Menu } from "@/components/ui/menu";
@@ -49,8 +50,8 @@ const CONFIRM: Record<ConfirmableAction, { title: string; body: string; button: 
 
 /**
  * The action area of a row: Copy (primary), Open, and a "more" menu for
- * everything else. Analytics and QR appear as clearly-labelled, disabled
- * entries until those features exist. Delete sits last, behind a divider,
+ * everything else, including the QR code. Analytics appears as a
+ * clearly-labelled, disabled entry until it exists. Delete sits last, behind a divider,
  * in danger tone, and always asks first.
  */
 export function LinkActions({ link, displayUrl, shortUrl }: LinkActionsProps) {
@@ -61,6 +62,7 @@ export function LinkActions({ link, displayUrl, shortUrl }: LinkActionsProps) {
   const [copied, setCopied] = useState(false);
   const [manualCopy, setManualCopy] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const [confirming, setConfirming] = useState<ConfirmableAction | null>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -96,7 +98,7 @@ export function LinkActions({ link, displayUrl, shortUrl }: LinkActionsProps) {
   const items: MenuItem[] = [
     { key: "edit", label: "Edit link", icon: Pencil, onSelect: () => setEditing(true) },
     { key: "analytics", label: "Analytics", icon: BarChart3, disabled: true, hint: "Coming soon" },
-    { key: "qr", label: "QR code", icon: QrCode, disabled: true, hint: "Coming soon" },
+    { key: "qr", label: "QR code", icon: QrCode, onSelect: () => setShowQr(true) },
     ...(allowed.has("enable") ? [{ key: "enable", label: "Enable", icon: CircleCheck, dividerBefore: true, onSelect: () => run("enable") }] : []),
     ...(allowed.has("unarchive") ? [{ key: "unarchive", label: "Restore from archive", icon: ArchiveRestore, dividerBefore: true, onSelect: () => run("unarchive") }] : []),
     ...(allowed.has("disable") ? [{ key: "disable", label: "Disable", icon: Ban, dividerBefore: !allowed.has("enable"), onSelect: () => setConfirming("disable") }] : []),
@@ -109,17 +111,18 @@ export function LinkActions({ link, displayUrl, shortUrl }: LinkActionsProps) {
   return (
     <>
       <div className="flex items-center gap-2" aria-busy={pending}>
-        <Button variant="secondary" onClick={copy} className="min-w-0 flex-1 @2xl:flex-none" aria-label={`Copy ${displayUrl}`}>
-          {copied ? <Check size={18} aria-hidden="true" className="flex-none" /> : <Copy size={18} aria-hidden="true" className="flex-none" />}
+        <Button variant="secondary" onClick={copy} className="btn-compact min-w-0 flex-1 @2xl:flex-none" aria-label={`Copy ${displayUrl}`}>
+          {/* Icons drop out in cards narrower than 320px so the labels always fit. */}
+          {copied ? <Check size={18} aria-hidden="true" className="hidden flex-none @xs:block" /> : <Copy size={18} aria-hidden="true" className="hidden flex-none @xs:block" />}
           {copied ? "Copied" : "Copy"}
         </Button>
         <a
           href={shortUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn-outline min-w-0 flex-1 @2xl:flex-none"
+          className="btn-outline btn-compact min-w-0 flex-1 @2xl:flex-none"
         >
-          <ExternalLink size={18} aria-hidden="true" className="flex-none" />
+          <ExternalLink size={18} aria-hidden="true" className="hidden flex-none @xs:block" />
           Open
           <span className="sr-only"> {displayUrl} in a new tab</span>
         </a>
@@ -127,6 +130,14 @@ export function LinkActions({ link, displayUrl, shortUrl }: LinkActionsProps) {
       </div>
 
       <EditLinkDialog link={link} displayUrl={displayUrl} open={editing} onClose={() => setEditing(false)} />
+      <QrDialog
+        open={showQr}
+        onClose={() => setShowQr(false)}
+        slug={link.slug}
+        shortUrl={shortUrl}
+        displayUrl={displayUrl}
+        status={link.effectiveStatus}
+      />
 
       <Dialog open={confirm !== null} onClose={() => setConfirming(null)} title={confirm?.title ?? "Confirm"} variant="sheet">
         {confirm ? (

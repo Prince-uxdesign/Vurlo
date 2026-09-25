@@ -1,9 +1,9 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "destructive";
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends ComponentProps<"button"> {
   variant?: ButtonVariant;
   /** Shows a spinner, disables the button, and sets aria-busy. */
   loading?: boolean;

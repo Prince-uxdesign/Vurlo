@@ -1,7 +1,8 @@
-import { CalendarClock, CalendarPlus } from "lucide-react";
+import { CalendarClock, CalendarPlus, Tag } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { describeExpiry, formatDate } from "@/lib/format";
 import type { LinkListItem } from "@/lib/links/workspace-types";
+import { hasUtm } from "@/lib/validation/utm";
 import { ExpandableUrl } from "./expandable-url";
 import { LinkActions } from "./link-actions";
 import { StatusBadge } from "./status-badge";
@@ -17,6 +18,12 @@ export function LinkRow({ link, now }: { link: LinkListItem; now: Date }) {
   const expiry = describeExpiry(link.expiresAt, now);
   const displayUrl = `${siteConfig.shortLinkHost}/${link.slug}`;
   const origin = new URL(siteConfig.url).origin;
+  // Only whether visitors arrive tagged; the values themselves live in Edit.
+  const tagged = hasUtm(link.destinationUrl, {
+    source: link.utmSource,
+    medium: link.utmMedium,
+    campaign: link.utmCampaign,
+  });
 
   return (
     // The row picks its layout from the width it is actually given (container
@@ -24,7 +31,7 @@ export function LinkRow({ link, now }: { link: LinkListItem; now: Date }) {
     // workspace list get the right composition on any device.
     <li className="@container">
       <div className="p-4 sm:p-5">
-        <div className="grid gap-x-8 gap-y-3 @2xl:grid-cols-[minmax(0,1fr)_auto] @4xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto] @4xl:gap-x-10">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @2xl:grid-cols-[minmax(0,1fr)_auto] @4xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto] @4xl:gap-x-10">
           <div className="min-w-0 @2xl:col-start-1 @2xl:row-start-1">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <p className="min-w-0 break-all font-mono text-[16px] font-semibold leading-snug">{displayUrl}</p>
@@ -47,6 +54,13 @@ export function LinkRow({ link, now }: { link: LinkListItem; now: Date }) {
                 <dt className="sr-only">Expiry</dt>
                 <dd className={expiry.soon ? "font-semibold" : undefined}>{expiry.text}</dd>
               </div>
+              {tagged ? (
+                <div className="flex items-center gap-2">
+                  <Tag size={16} aria-hidden="true" className="flex-none text-(--color-muted)" />
+                  <dt className="sr-only">Tracking</dt>
+                  <dd>UTM tagged</dd>
+                </div>
+              ) : null}
             </dl>
           </div>
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { Check, Copy, ExternalLink } from "lucide-react";
+import { Check, Copy, ExternalLink, QrCode } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { QrDialog } from "@/components/qr/qr-dialog";
 import { Button } from "@/components/ui/button";
 import type { CreatedLinkPayload } from "@/lib/links/api-types";
 import { copyText } from "@/lib/utils/clipboard";
@@ -24,14 +25,15 @@ function formatExpiry(iso: string | null): string {
 }
 
 /**
- * Success state. QR codes and analytics are later phases, so nothing here
- * pretends to offer them: just copy, open, and create another.
+ * Success state: copy, open, QR code, and create another. Analytics is a
+ * later phase, so nothing here pretends to offer it.
  */
 export function ShortenerResult({ link, onReset }: ShortenerResultProps) {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const linkTextRef = useRef<HTMLParagraphElement>(null);
   const [showFullDestination, setShowFullDestination] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
@@ -90,7 +92,7 @@ export function ShortenerResult({ link, onReset }: ShortenerResultProps) {
         >
           {link.displayUrl}
         </p>
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
           <Button
             variant="primary"
             onClick={handleCopy}
@@ -115,6 +117,10 @@ export function ShortenerResult({ link, onReset }: ShortenerResultProps) {
             Open
             <span className="sr-only"> (opens in a new tab)</span>
           </a>
+          <Button variant="outline" onClick={() => setShowQr(true)} className="col-span-2 sm:col-span-1">
+            <QrCode size={18} aria-hidden="true" />
+            QR code
+          </Button>
         </div>
         <p role="status" className="text-small mt-2 min-h-[1.5em] text-(--color-muted)">
           {copyState === "copied" ? "Short link copied to your clipboard." : null}
@@ -164,6 +170,14 @@ export function ShortenerResult({ link, onReset }: ShortenerResultProps) {
       <Button variant="outline" onClick={onReset} className="mt-5 w-full sm:w-auto">
         Shorten another link
       </Button>
+
+      <QrDialog
+        open={showQr}
+        onClose={() => setShowQr(false)}
+        slug={link.slug}
+        shortUrl={link.shortUrl}
+        displayUrl={link.displayUrl}
+      />
     </div>
   );
 }

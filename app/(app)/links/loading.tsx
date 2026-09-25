@@ -1,6 +1,6 @@
-import { Bone, ListSkeleton } from "@/components/links/skeletons";
+import { Bone, ListSkeleton, UsageMeterSkeleton } from "@/components/links/skeletons";
 
-/** Mirrors the real page: title row, toolbar, list. */
+/** Mirrors the real page: title row, usage meter, toolbar, list. */
 export default function LinksLoading() {
   return (
     <>
@@ -8,7 +8,8 @@ export default function LinksLoading() {
         <Bone className="h-[38px] w-28 md:h-[46px]" />
         <Bone className="h-11 w-36" />
       </div>
-      <div className="mt-6 grid gap-3">
+      <div className="mt-5"><UsageMeterSkeleton /></div>
+      <div className="mt-5 grid gap-3">
         <div className="flex gap-2">
           <Bone className="h-12 min-w-0 flex-1" />
           <Bone className="hidden h-12 w-44 md:block lg:hidden" />

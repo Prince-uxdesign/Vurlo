@@ -13,13 +13,15 @@ import {
   DEFAULT_EXPIRATION,
   accountExpirationOptions,
   anonymousExpirationOptions,
-  findUtmConflicts,
   isSchemeless,
   normalizeDestination,
   validateAlias,
   validateUtm,
 } from "@/lib/validation/link-input";
 import type { ExpirationOption, UtmParams } from "@/lib/validation/link-input";
+import { UtmFields, UtmToggle } from "@/components/links/utm-builder";
+import { UTM_KEYS, trackedUrlTooLong } from "@/lib/validation/utm";
+import type { UtmErrors } from "@/lib/validation/utm";
 import { createLink } from "./create-link";
 import { FieldError } from "./field-error";
 import { ShortenerOptions } from "./shortener-options";
@@ -32,6 +34,8 @@ type Status = "idle" | "creating" | "success";
 interface Errors {
   destination?: string;
   alias?: string;
+  /** Per-field UTM messages, plus one for the whole section. */
+  utmFields?: UtmErrors;
   utm?: string;
   form?: string;
 }
@@ -60,6 +64,7 @@ export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = 
   const [expiration, setExpiration] = useState<ExpirationOption>(DEFAULT_EXPIRATION);
   const [utm, setUtm] = useState<UtmParams>(emptyUtm);
   const [showOptions, setShowOptions] = useState(false);
+  const [showUtm, setShowUtm] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [link, setLink] = useState<CreatedLinkPayload | null>(null);
   const [slow, setSlow] = useState(false);
@@ -91,7 +96,6 @@ export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = 
   const destinationCheck = normalizeDestination(destination);
   const showSchemeHint =
     destinationCheck.ok && isSchemeless(destination) && !errors.destination;
-  const utmConflicts = destinationCheck.ok ? findUtmConflicts(destinationCheck.value, utm) : [];
   const expiryLabel =
     expirationChoices.find((option) => option.value === expiration)?.label ?? "In 30 days";
 
@@ -106,11 +110,22 @@ export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = 
     );
   }
 
-  function focusOptionField(field: "alias" | "utm") {
+  function focusAlias() {
     setShowOptions(true);
     requestAnimationFrame(() => {
-      (field === "alias" ? aliasRef.current : utmRef.current)?.focus();
-      revealError(field === "alias" ? "alias-status" : "utm-error");
+      aliasRef.current?.focus();
+      revealError("alias-status");
+    });
+  }
+
+  /** Opens the UTM section and focuses the first field with a problem. */
+  function focusUtm(fieldErrors: UtmErrors = {}) {
+    setShowUtm(true);
+    requestAnimationFrame(() => {
+      const key = UTM_KEYS.find((k) => fieldErrors[k]);
+      const input = key ? document.getElementById(`shortener-utm-${key}`) : utmRef.current;
+      input?.focus();
+      revealError(key ? `shortener-utm-${key}-error` : "shortener-utm-error");
     });
   }
 
@@ -122,18 +137,20 @@ export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = 
     const utmCheck = validateUtm(utm);
     const next: Errors = {};
     if (!destinationCheck.ok) next.destination = destinationCheck.error;
-    if (!utmCheck.ok) next.utm = utmCheck.error;
+    if (!utmCheck.ok) next.utmFields = utmCheck.fieldErrors;
+    else if (destinationCheck.ok) next.utm = trackedUrlTooLong(destinationCheck.value, utmCheck.value);
     // Alias problems we already know about (bad format, reserved, taken) are
     // explained by the live status line under the field. Stop and move focus
     // there instead of repeating the same message a second time.
     const aliasBlocked = !aliasCheck.ok || aliasState.kind === "taken";
 
-    if (next.destination || next.utm || aliasBlocked) {
+    if (next.destination || next.utm || next.utmFields || aliasBlocked) {
       setErrors(next);
       if (next.destination) {
         destinationRef.current?.focus();
         revealError("destination-error");
-      } else focusOptionField(aliasBlocked ? "alias" : "utm");
+      } else if (aliasBlocked) focusAlias();
+      else focusUtm(next.utmFields);
       return;
     }
 
@@ -158,13 +175,13 @@ export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = 
         revealError("destination-error");
       } else if (response.code === "alias_taken") {
         setTakenAliases((current) => [...current, normalizedAlias]);
-        focusOptionField("alias");
+        focusAlias();
       } else if (response.field === "alias") {
         setErrors({ alias: message });
-        focusOptionField("alias");
+        focusAlias();
       } else if (response.field === "utm") {
         setErrors({ utm: message });
-        focusOptionField("utm");
+        focusUtm();
       } else {
         setErrors({ form: message });
         revealError("form-error");
@@ -265,47 +282,76 @@ export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = 
         </div>
         <FieldError id="form-error" message={errors.form} />
 
-        <button
-          type="button"
-          className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-(--radius-md) text-[15px] font-semibold hover:underline"
-          aria-expanded={showOptions}
-          aria-controls="shortener-options"
-          onClick={() => setShowOptions((value) => !value)}
-        >
-          Custom alias, expiry &amp; UTM
-          <ChevronDown
-            size={18}
-            aria-hidden="true"
-            className={cn("transition-transform", showOptions && "rotate-180")}
-          />
-        </button>
+        {/*
+          Each panel follows its own toggle in the DOM, so Tab order matches
+          what opens. While the first panel is closed both toggles are inline
+          and share a row where there's room.
+        */}
+        <div className="mt-3">
+          <button
+            type="button"
+            className="mr-6 inline-flex min-h-11 items-center gap-1.5 rounded-(--radius-md) text-[15px] font-semibold hover:underline"
+            aria-expanded={showOptions}
+            aria-controls="shortener-options"
+            onClick={() => setShowOptions((value) => !value)}
+          >
+            Custom alias &amp; expiry
+            <ChevronDown
+              size={18}
+              aria-hidden="true"
+              className={cn("transition-transform", showOptions && "rotate-180")}
+            />
+          </button>
 
-        {showOptions ? (
-          <ShortenerOptions
-            id="shortener-options"
-            disabled={isCreating}
-            alias={alias}
-            aliasState={aliasState}
-            aliasError={errors.alias}
-            aliasRef={aliasRef}
-            onAliasChange={(value) => {
-              setAlias(value);
-              if (errors.alias) setErrors((e) => ({ ...e, alias: undefined }));
-            }}
-            expiration={expiration}
-            expirationChoices={expirationChoices}
-            isSignedIn={isSignedIn}
-            onExpirationChange={setExpiration}
+          {showOptions ? (
+            <ShortenerOptions
+              id="shortener-options"
+              disabled={isCreating}
+              alias={alias}
+              aliasState={aliasState}
+              aliasError={errors.alias}
+              aliasRef={aliasRef}
+              onAliasChange={(value) => {
+                setAlias(value);
+                if (errors.alias) setErrors((e) => ({ ...e, alias: undefined }));
+              }}
+              expiration={expiration}
+              expirationChoices={expirationChoices}
+              isSignedIn={isSignedIn}
+              onExpirationChange={setExpiration}
+            />
+          ) : null}
+
+          <UtmToggle
+            panelId="shortener-utm"
+            open={showUtm}
             utm={utm}
-            utmError={errors.utm}
-            utmConflicts={utmConflicts}
-            utmSourceRef={utmRef}
-            onUtmChange={(key, value) => {
-              setUtm((current) => ({ ...current, [key]: value }));
-              if (errors.utm) setErrors((e) => ({ ...e, utm: undefined }));
-            }}
+            className={showOptions ? "mt-3" : undefined}
+            onToggle={() => setShowUtm((value) => !value)}
           />
-        ) : null}
+
+          {showUtm ? (
+            <UtmFields
+              idPrefix="shortener"
+              panelId="shortener-utm"
+              className="mt-2 border-t border-(--color-border) pt-5"
+              utm={utm}
+              errors={errors.utmFields ?? {}}
+              formError={errors.utm}
+              destination={destinationCheck.ok ? destinationCheck.value : null}
+              disabled={isCreating}
+              firstFieldRef={utmRef}
+              onChange={(key, value) => {
+                setUtm((current) => ({ ...current, [key]: value }));
+                setErrors((e) =>
+                  e.utm || e.utmFields?.[key]
+                    ? { ...e, utm: undefined, utmFields: { ...e.utmFields, [key]: undefined } }
+                    : e,
+                );
+              }}
+            />
+          ) : null}
+        </div>
 
         <p className="text-small mt-4 border-t border-(--color-border) pt-4 text-(--color-muted)">
           {isSignedIn

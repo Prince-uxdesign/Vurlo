@@ -10,7 +10,7 @@ export function LinkRowSkeleton() {
   return (
     <li className="@container">
       <div className="p-4 sm:p-5">
-        <div className="grid gap-x-8 gap-y-3 @2xl:grid-cols-[minmax(0,1fr)_auto] @4xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto] @4xl:gap-x-10">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @2xl:grid-cols-[minmax(0,1fr)_auto] @4xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_auto] @4xl:gap-x-10">
           <div className="@2xl:col-start-1 @2xl:row-start-1">
             <Bone className="h-[26px] w-3/5" />
             <Bone className="mt-2 h-[38px] w-full" />
@@ -32,6 +32,23 @@ export function LinkRowSkeleton() {
         </div>
       </div>
     </li>
+  );
+}
+
+/**
+ * Placeholder for UsageMeter. Same box and type sizes, with transparent
+ * stand-in text, so its height matches the real meter at every width.
+ */
+export function UsageMeterSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="grid gap-x-5 gap-y-2 rounded-(--radius-lg) border border-(--color-border) bg-white px-4 py-3 text-transparent select-none sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:px-5"
+    >
+      <p className="text-[15px]"><span className="skeleton font-semibold">Active links 00/50</span></p>
+      <div className="skeleton h-2 rounded-full" />
+      <p className="text-small"><span className="skeleton">00 left</span></p>
+    </div>
   );
 }
 

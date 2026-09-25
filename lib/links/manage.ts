@@ -1,5 +1,6 @@
 import type { ExpirationOption, UtmParams } from "@/lib/validation/link-input";
 import { normalizeDestination, resolveExpiration, validateAlias, validateUtm } from "@/lib/validation/link-input";
+import { trackedUrlTooLong } from "@/lib/validation/utm";
 import type { LinkStatus } from "./types";
 
 /**
@@ -82,6 +83,7 @@ export function validateLinkEdit(input: LinkEditInput, now: Date = new Date()): 
 
   const utm = validateUtm(input.utm);
   if (!utm.ok) fieldErrors.utm = utm.error;
+  else if (destination.ok) fieldErrors.utm = trackedUrlTooLong(destination.value, utm.value);
 
   let expiresAt: string | null | undefined;
   if (input.expiry !== "keep") {

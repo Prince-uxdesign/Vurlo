@@ -325,6 +325,14 @@ video {
   color: #ffffff;
 }
 
+/* Tighter buttons for rows of equal-width actions. Declared after the
+ * variants (same specificity) because utilities can't override them. */
+.btn-compact {
+  padding-left: 12px;
+  padding-right: 12px;
+  gap: 6px;
+}
+
 /* ---------- Inputs ---------- */
 
 .input {
@@ -749,6 +757,21 @@ video {
 @media (min-width: 1024px) {
   .dialog-panel {
     width: min(100% - 4rem, 42rem);
+  }
+}
+/* The QR dialog is short, so small tablets (600–639px) already get the
+   centered panel instead of the full-screen phone layout. */
+@media (min-width: 600px) and (max-width: 639px) {
+  .dialog-panel.dialog-qr {
+    margin: auto;
+    width: min(100% - 3rem, 40rem);
+    /* fit-content, not auto: a modal dialog is pinned top and bottom, so
+       auto would stretch it to its max height. */
+    height: fit-content;
+    min-height: 0;
+    max-height: min(100dvh - 3rem, 52rem);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
   }
 }
 

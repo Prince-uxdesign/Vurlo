@@ -176,7 +176,7 @@ describe("utm conflicts and normalization hints", () => {
 
   it("keeps fragments and encodes special characters", () => {
     assert.equal(applyUtm("https://example.com/p#section", { source: "a b", medium: null, campaign: null }),
-      "https://example.com/p?utm_source=a+b#section");
+      "https://example.com/p?utm_source=a%20b#section");
   });
 
   it("flags schemeless input only", () => {

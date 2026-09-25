@@ -7,6 +7,7 @@ import {
   validateAlias,
   validateUtm,
 } from "@/lib/validation/link-input";
+import { trackedUrlTooLong } from "@/lib/validation/utm";
 import { generateSlug } from "./generate-slug";
 import { ACTIVE_LINK_LIMIT } from "./list-params";
 import { logServerError } from "./log";
@@ -81,6 +82,8 @@ export async function createLink(
 
   const utm = validateUtm(isRecord(raw.utm) ? raw.utm : undefined);
   if (!utm.ok) return fail(utm.code, "utm", utm.error);
+  const tooLong = trackedUrlTooLong(destination.value, utm.value);
+  if (tooLong) return fail("invalid_utm", "utm", tooLong);
 
   const client = options.client === undefined ? createAdminClient() : options.client;
   if (!client) {

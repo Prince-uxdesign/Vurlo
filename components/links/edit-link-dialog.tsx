@@ -16,8 +16,11 @@ import { MAX_SLUG_CHANGES, slugChange } from "@/lib/links/manage";
 import type { EditExpiry, LinkEditErrors } from "@/lib/links/manage";
 import type { LinkListItem } from "@/lib/links/workspace-types";
 import { cn } from "@/lib/utils/cn";
-import { accountExpirationOptions } from "@/lib/validation/link-input";
+import { accountExpirationOptions, normalizeDestination } from "@/lib/validation/link-input";
+import { UTM_KEYS, validateUtm } from "@/lib/validation/utm";
+import type { UtmErrors } from "@/lib/validation/utm";
 import { StatusBadge } from "./status-badge";
+import { UtmFields, UtmToggle, filledUtmCount } from "./utm-builder";
 
 interface EditLinkDialogProps {
   link: LinkListItem;
@@ -63,6 +66,8 @@ function EditForm({ link, displayUrl, onClose }: Omit<EditLinkDialogProps, "open
   const [destination, setDestination] = useState(link.destinationUrl);
   const [expiry, setExpiry] = useState<EditExpiry>("keep");
   const [utm, setUtm] = useState({ source: link.utmSource ?? "", medium: link.utmMedium ?? "", campaign: link.utmCampaign ?? "" });
+  const [showUtm, setShowUtm] = useState(filledUtmCount(utm) > 0);
+  const [utmErrors, setUtmErrors] = useState<UtmErrors>({});
   const [changingAlias, setChangingAlias] = useState(false);
   const [alias, setAlias] = useState(link.slug);
   const [acknowledged, setAcknowledged] = useState(false);
@@ -73,6 +78,7 @@ function EditForm({ link, displayUrl, onClose }: Omit<EditLinkDialogProps, "open
   const newSlug = changingAlias ? slugChange(alias, link.slug) : undefined;
   const availability = useAliasAvailability(newSlug ?? "");
   const host = siteConfig.shortLinkHost;
+  const destinationCheck = normalizeDestination(destination);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -80,6 +86,15 @@ function EditForm({ link, displayUrl, onClose }: Omit<EditLinkDialogProps, "open
     if (newSlug && !acknowledged) {
       setErrors({ ack: "Confirm that you understand the current address will stop working." });
       document.getElementById(`ack-${link.id}`)?.focus();
+      return;
+    }
+    // Same rules as the server, checked here so each field gets its own message.
+    const utmCheck = validateUtm(utm);
+    if (!utmCheck.ok) {
+      setUtmErrors(utmCheck.fieldErrors);
+      setShowUtm(true);
+      const key = UTM_KEYS.find((k) => utmCheck.fieldErrors[k]);
+      requestAnimationFrame(() => document.getElementById(`edit-${link.id}-utm-${key}`)?.focus());
       return;
     }
     startTransition(async () => {
@@ -105,6 +120,7 @@ function EditForm({ link, displayUrl, onClose }: Omit<EditLinkDialogProps, "open
         return;
       }
       setErrors(result.fieldErrors ?? { form: result.error });
+      if (result.fieldErrors?.utm) setShowUtm(true);
     });
   }
 
@@ -209,31 +225,25 @@ function EditForm({ link, displayUrl, onClose }: Omit<EditLinkDialogProps, "open
             <FieldMsg id={`exp-err-${link.id}`} message={errors.expiry} />
           </div>
 
-          {/* UTM */}
-          <fieldset className="grid gap-3">
-            <legend className="text-label">UTM parameters <span className="font-normal text-(--color-muted)">(optional)</span></legend>
-            <p className="field-helper -mt-1">Added to the destination when someone opens the link.</p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {(["source", "medium", "campaign"] as const).map((key) => (
-                <div key={key} className="grid min-w-0 gap-1.5">
-                  <label htmlFor={`utm-${key}-${link.id}`} className="text-small font-medium capitalize">{key}</label>
-                  <Input
-                    id={`utm-${key}-${link.id}`}
-                    autoComplete="off"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    maxLength={100}
-                    value={utm[key]}
-                    hasError={Boolean(errors.utm)}
-                    aria-invalid={errors.utm ? true : undefined}
-                    aria-describedby={`utm-err-${link.id}`}
-                    onChange={(e) => { setUtm((u) => ({ ...u, [key]: e.target.value })); clear("utm"); }}
-                  />
-                </div>
-              ))}
-            </div>
-            <FieldMsg id={`utm-err-${link.id}`} message={errors.utm} />
-          </fieldset>
+          {/* UTM: open by default when the link already has values. */}
+          <section aria-label="UTM parameters" className="grid grid-cols-[minmax(0,1fr)] gap-2 border-t border-(--color-border) pt-4">
+            <UtmToggle panelId={`utm-${link.id}`} open={showUtm} utm={utm} onToggle={() => setShowUtm((v) => !v)} className="justify-self-start" />
+            {showUtm ? (
+              <UtmFields
+                idPrefix={`edit-${link.id}`}
+                panelId={`utm-${link.id}`}
+                utm={utm}
+                errors={utmErrors}
+                formError={errors.utm}
+                destination={destinationCheck.ok ? destinationCheck.value : null}
+                onChange={(key, value) => {
+                  setUtm((u) => ({ ...u, [key]: value }));
+                  setUtmErrors((x) => ({ ...x, [key]: undefined }));
+                  clear("utm");
+                }}
+              />
+            ) : null}
+          </section>
         </div>
       </form>
     </DialogPanel>
