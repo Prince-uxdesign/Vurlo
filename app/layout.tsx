@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Schibsted_Grotesk } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from "@/components/ui/toast";
 import { siteConfig } from "@/config/site";
 
 export const fontDisplay = Schibsted_Grotesk({
@@ -30,7 +31,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${fontDisplay.variable} ${fontMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }

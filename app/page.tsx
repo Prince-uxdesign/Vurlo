@@ -3,38 +3,40 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { Divider } from "@/components/ui/divider";
+import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Section } from "@/components/ui/section";
+import { MarketingNav } from "@/components/layout/marketing-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
 import { isSupabaseConfigured } from "@/lib/utils/env";
 
 /**
- * Phase 0A foundation page — not the marketing site.
- * Exists to verify tokens, typography, and primitives render correctly.
+ * Shell preview page — not the marketing site.
+ * Verifies the Phase 0B navigation, footer, and primitives render.
+ * Full component coverage lives at /showcase (dev only).
  */
 export default function Home() {
   const supabaseReady = isSupabaseConfigured();
 
   return (
     <>
-      <SiteHeader />
+      <MarketingNav />
       <main>
         <Container>
           <Section>
             <p className="text-small text-(--color-muted)">
-              Phase 0A — Project foundation
+              Phase 0B — Design system + application shell
             </p>
-            <h1 className="text-h1 mt-2">Vurlo foundation is ready</h1>
+            <h1 className="text-h1 mt-2">Vurlo shell is ready</h1>
             <p className="text-body-l mt-3 max-w-2xl text-(--color-muted)">
               Simple to create. Powerful to manage. Useful after the click.
-              This page only verifies the foundation renders — marketing,
-              auth, links, and analytics land in later phases.
+              This page only verifies the shell renders — product
+              functionality lands in later phases.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button variant="primary">Create link</Button>
               <Button variant="secondary">Secondary action</Button>
+              <Button variant="outline">Outline action</Button>
               <Button variant="ghost">Ghost action</Button>
             </div>
           </Section>
@@ -46,14 +48,18 @@ export default function Home() {
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <Card>
                 <h3 className="text-h3">Form baseline</h3>
-                <div className="mt-3 grid gap-2">
-                  <Label htmlFor="foundation-url">Destination URL</Label>
-                  <Input
-                    id="foundation-url"
-                    type="url"
-                    placeholder="https://example.com/article"
-                    autoComplete="off"
-                  />
+                <div className="mt-3 grid gap-4">
+                  <Field
+                    id="shell-url"
+                    label="Destination URL"
+                    helper="The long URL your short link points to."
+                  >
+                    <Input
+                      type="url"
+                      placeholder="https://example.com/article"
+                      autoComplete="off"
+                    />
+                  </Field>
                 </div>
               </Card>
               <Card>

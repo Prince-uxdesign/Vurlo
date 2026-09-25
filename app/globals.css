@@ -187,6 +187,8 @@ video {
 .btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-height: 44px;
   gap: 8px;
   padding: 12px 24px;
   border-radius: var(--radius-pill);
@@ -229,6 +231,8 @@ video {
 .btn-secondary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-height: 44px;
   gap: 8px;
   padding: 11px 22px;
   border-radius: var(--radius-md);
@@ -251,9 +255,42 @@ video {
   cursor: not-allowed;
 }
 
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: var(--radius-md);
+  font: 600 15px/1.2 var(--font-display);
+  color: #000000;
+  background: #ffffff;
+  border: 1px solid var(--color-mist-300);
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+  cursor: pointer;
+}
+.btn-outline:hover {
+  border-color: #000000;
+  background: var(--color-mist-100);
+}
+.btn-outline:active {
+  background: var(--color-mist-300);
+}
+.btn-outline:disabled {
+  border-color: var(--color-mist-300);
+  color: var(--color-stone-500);
+  background: transparent;
+  cursor: not-allowed;
+}
+
 .btn-ghost {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-height: 44px;
   gap: 8px;
   padding: 11px 16px;
   border-radius: var(--radius-md);
@@ -270,6 +307,8 @@ video {
 .btn-destructive {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-height: 44px;
   gap: 8px;
   padding: 11px 22px;
   border-radius: var(--radius-md);
@@ -338,6 +377,206 @@ video {
   border: 1px solid var(--color-mist-300);
   border-radius: var(--radius-lg);
   padding: 20px;
+}
+
+/* ---------- Select (styled native control — keyboard + SR free) ---------- */
+
+.select {
+  width: 100%;
+  appearance: none;
+  padding: 10px 36px 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-mist-300);
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234A443C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  font: 400 15px/1.4 var(--font-display);
+  color: #000000;
+  cursor: pointer;
+}
+
+.select:focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.select.error {
+  border-color: var(--color-danger-700);
+}
+
+.select:disabled {
+  background-color: var(--color-mist-100);
+  color: var(--color-stone-500);
+  cursor: not-allowed;
+}
+
+/* ---------- Form helper + error text ---------- */
+
+.field-helper {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-slate-700);
+}
+
+.field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 500;
+  color: var(--color-danger-700);
+}
+
+/* ---------- Icon button (44px touch target) ---------- */
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  color: #000000;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.icon-btn:hover {
+  background: var(--color-mist-100);
+}
+
+.icon-btn:active {
+  background: var(--color-mist-300);
+}
+
+.icon-btn:disabled {
+  color: var(--color-stone-500);
+  cursor: not-allowed;
+}
+
+.icon-btn-bordered {
+  border: 1px solid var(--color-mist-300);
+  background: #ffffff;
+}
+
+/* ---------- Spinner ---------- */
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: vurlo-spin 700ms linear infinite;
+}
+
+@keyframes vurlo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Skeleton ---------- */
+
+.skeleton {
+  border-radius: var(--radius-sm);
+  background: var(--color-mist-100);
+  animation: vurlo-pulse 1600ms ease-in-out infinite;
+}
+
+@keyframes vurlo-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---------- Tooltip (CSS-only, shows on hover + keyboard focus) ---------- */
+
+.tooltip-root {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip-bubble {
+  position: absolute;
+  z-index: 50;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 240px;
+  width: max-content;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: #000000;
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 500;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.tooltip-root:hover .tooltip-bubble,
+.tooltip-root:focus-within .tooltip-bubble {
+  opacity: 1;
+}
+
+/* ---------- Toast ---------- */
+
+.toast-viewport {
+  position: fixed;
+  z-index: 100;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  .toast-viewport {
+    left: auto;
+    right: 24px;
+    bottom: 24px;
+    width: 360px;
+  }
+}
+
+.toast-card {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-mist-300);
+  background: #ffffff;
+  box-shadow: var(--shadow-float);
+  animation: vurlo-toast-in 200ms ease-out;
+}
+
+@keyframes vurlo-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ---------- Motion (restrained) ---------- */
