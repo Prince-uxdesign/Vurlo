@@ -1,6 +1,6 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": { "noUncheckedIndexedAccess": false, "incremental": false, "baseUrl": ".." },
-  "include": ["./**/*.ts", "../types/**/*.ts"],
+  "include": ["./**/*.ts", "./**/*.tsx", "../types/**/*.ts"],
   "exclude": ["node_modules"]
 }

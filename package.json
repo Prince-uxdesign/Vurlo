@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json",
-    "test": "tsx --conditions react-server --test tests/*.test.ts"
+    "test": "tsx --conditions react-server --test tests/*.test.ts && npm run test:ui",
+    "test:ui": "tsx --test tests/analytics-dashboard.test.tsx"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

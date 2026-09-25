@@ -79,6 +79,48 @@ export type Database = {
         Update: { key?: string; window_start?: string; count?: number };
         Relationships: [];
       };
+      link_events: {
+        Row: {
+          id: string;
+          link_id: string;
+          occurred_at: string;
+          visitor_hash: string | null;
+          device_type: string;
+          browser: string;
+          operating_system: string;
+          country_code: string;
+          referrer_source: string;
+          traffic_class: string;
+          is_bot: boolean;
+        };
+        Insert: {
+          id?: string;
+          link_id: string;
+          occurred_at?: string;
+          visitor_hash?: string | null;
+          device_type?: string;
+          browser?: string;
+          operating_system?: string;
+          country_code?: string;
+          referrer_source?: string;
+          traffic_class?: string;
+          is_bot?: boolean;
+        };
+        Update: {
+          id?: string;
+          link_id?: string;
+          occurred_at?: string;
+          visitor_hash?: string | null;
+          device_type?: string;
+          browser?: string;
+          operating_system?: string;
+          country_code?: string;
+          referrer_source?: string;
+          traffic_class?: string;
+          is_bot?: boolean;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -154,6 +196,74 @@ export type Database = {
           utm_source: string | null;
           utm_medium: string | null;
           utm_campaign: string | null;
+        }[];
+      };
+      record_link_event: {
+        Args: {
+          p_slug: string;
+          p_device_type?: string;
+          p_browser?: string;
+          p_operating_system?: string;
+          p_country_code?: string;
+          p_referrer_source?: string;
+          p_traffic_class?: string;
+          p_is_bot?: boolean;
+          p_visitor_hash?: string | null;
+        };
+        Returns: string;
+      };
+      my_link_event_stats: {
+        Args: { p_link_id: string };
+        Returns: {
+          total: number;
+          human: number;
+          bots: number;
+          scanners: number;
+          approx_uniques: number;
+          last_clicked_at: string | null;
+        }[];
+      };
+      owns_link: {
+        Args: { p_link_id: string };
+        Returns: boolean;
+      };
+      my_link_metrics: {
+        Args: { p_link_id: string; p_start?: string | null; p_end?: string | null };
+        Returns: {
+          total_requests: number;
+          human_clicks: number;
+          bots: number;
+          scanners: number;
+          unknown_traffic: number;
+          approx_uniques: number;
+          approx_human_uniques: number;
+          last_clicked_at: string | null;
+        }[];
+      };
+      my_link_timeseries: {
+        Args: { p_link_id: string; p_start: string; p_end: string; p_bucket?: string };
+        Returns: { bucket_start: string; total: number; human: number }[];
+      };
+      my_link_breakdown: {
+        Args: {
+          p_link_id: string;
+          p_dimension: string;
+          p_start?: string | null;
+          p_end?: string | null;
+        };
+        Returns: { key: string; total: number; human: number }[];
+      };
+      my_account_metrics: {
+        Args: { p_start?: string | null; p_end?: string | null };
+        Returns: {
+          total_requests: number;
+          human_clicks: number;
+          bots: number;
+          scanners: number;
+          approx_uniques: number;
+          links_clicked: number;
+          total_links: number;
+          last_clicked_at: string | null;
         }[];
       };
     };

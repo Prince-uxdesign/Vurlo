@@ -50,9 +50,8 @@ const CONFIRM: Record<ConfirmableAction, { title: string; body: string; button: 
 
 /**
  * The action area of a row: Copy (primary), Open, and a "more" menu for
- * everything else, including the QR code. Analytics appears as a
- * clearly-labelled, disabled entry until it exists. Delete sits last, behind a divider,
- * in danger tone, and always asks first.
+ * everything else, including the QR code and per-link analytics. Delete sits
+ * last, behind a divider, in danger tone, and always asks first.
  */
 export function LinkActions({ link, displayUrl, shortUrl }: LinkActionsProps) {
   const { notify } = useToast();
@@ -97,7 +96,7 @@ export function LinkActions({ link, displayUrl, shortUrl }: LinkActionsProps) {
   const allowed = new Set(availableActions(link.status));
   const items: MenuItem[] = [
     { key: "edit", label: "Edit link", icon: Pencil, onSelect: () => setEditing(true) },
-    { key: "analytics", label: "Analytics", icon: BarChart3, disabled: true, hint: "Coming soon" },
+    { key: "analytics", label: "Analytics", icon: BarChart3, href: `/links/${link.id}` },
     { key: "qr", label: "QR code", icon: QrCode, onSelect: () => setShowQr(true) },
     ...(allowed.has("enable") ? [{ key: "enable", label: "Enable", icon: CircleCheck, dividerBefore: true, onSelect: () => run("enable") }] : []),
     ...(allowed.has("unarchive") ? [{ key: "unarchive", label: "Restore from archive", icon: ArchiveRestore, dividerBefore: true, onSelect: () => run("unarchive") }] : []),

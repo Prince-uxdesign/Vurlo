@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 import { LinkStatusPage } from "@/components/marketing/link-status-page";
+import { scheduleClickLogging } from "@/lib/analytics/record";
 import { resolveLink } from "@/lib/links/resolve-link";
 
 // Short links must never be indexed or cached: they can expire or change.
@@ -12,8 +14,9 @@ export const metadata: Metadata = {
 
 /**
  * The redirect engine. One database round trip (`resolve_link`), no other
- * work before responding. Analytics will be recorded off the critical path
- * in a later phase so it can never delay this redirect.
+ * work before responding. Analytics is recorded off the critical path via
+ * `after()` (see lib/analytics/record.ts) so it can never delay this
+ * redirect: schedule first, then throw the redirect.
  */
 export default async function ShortLinkPage({
   params,
@@ -25,8 +28,18 @@ export default async function ShortLinkPage({
   const result = await resolveLink(slug);
 
   switch (result.kind) {
-    case "redirect":
+    case "redirect": {
+      // Phase 6A: one background RPC (`record_link_event`) after the
+      // response is sent. Only successful redirects are logged -- expired,
+      // disabled, archived, deleted and unknown slugs record nothing.
+      // A logging failure can never break or slow this redirect.
+      try {
+        scheduleClickLogging(slug, await headers());
+      } catch {
+        // Headers unavailable (e.g. prerender): redirect anyway, log nothing.
+      }
       redirect(result.url); // 307: temporary, so expiry and edits take effect
+    }
     case "expired":
       return <LinkStatusPage kind="expired" />;
     case "disabled":
