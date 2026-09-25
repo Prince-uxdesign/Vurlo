@@ -1,8 +1,8 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
 
 export interface IconButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement> {
+  extends ComponentProps<"button"> {
   /** Accessible name — required since the button has no visible text. */
   "aria-label": string;
   bordered?: boolean;

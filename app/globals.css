@@ -173,7 +173,7 @@ video {
 
 /* ---------- Focus (never remove without replacement) ---------- */
 
-:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
   border-radius: 4px;
@@ -577,6 +577,99 @@ video {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ---------- Marketing surface (.flat-ui) ----------
+ * The public site is flat: no gradients, glow, or pills. Scoped so the
+ * in-app primary button keeps the design-system treatment.
+ */
+
+.flat-ui .btn-primary {
+  border-radius: var(--radius-md);
+  background: var(--color-ember-700);
+  border-color: var(--color-ember-700);
+  box-shadow: none;
+}
+.flat-ui .btn-primary:hover {
+  background: #a93708;
+  box-shadow: none;
+}
+.flat-ui .btn-primary:active {
+  background: #8f2f07;
+  box-shadow: none;
+}
+.flat-ui .btn-primary:disabled {
+  background: var(--color-mist-300);
+  border-color: var(--color-mist-300);
+}
+
+.flat-ui .input,
+.flat-ui .select {
+  min-height: 48px;
+  font-size: 16px; /* prevents iOS focus zoom */
+}
+
+.flat-ui .input::placeholder,
+.input-group input::placeholder {
+  color: #6f675d; /* ~5:1 on white; design-system stone-500 is 3.3:1 */
+}
+
+/* The URL field is the page's main affordance: give it a firm edge. */
+.shortener-panel .input {
+  border-color: var(--color-ink-900);
+}
+
+/* Shortener panel: hard offset edge instead of a soft glow. */
+.shortener-panel {
+  padding: 20px;
+  border: 1.5px solid var(--color-ink-900);
+  border-radius: var(--radius-lg);
+  background: #ffffff;
+  box-shadow: 5px 5px 0 var(--color-ink-900);
+}
+@media (min-width: 640px) {
+  .shortener-panel {
+    padding: 24px;
+  }
+}
+
+/* Prefix + input as one control (alias field). */
+.input-group {
+  display: flex;
+  align-items: stretch;
+  min-height: 48px;
+  border: 1px solid var(--color-mist-300);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  overflow: hidden;
+}
+.input-group:focus-within {
+  outline: 2px solid #000000;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+.input-group.error {
+  border-color: var(--color-danger-700);
+}
+.input-group-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 4px 0 14px;
+  color: var(--color-slate-700);
+  font: 500 14px/1 var(--font-mono);
+  white-space: nowrap;
+}
+.input-group input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px 10px 0;
+  border: 0;
+  background: transparent;
+  font: 500 16px/1.4 var(--font-mono);
+  color: #000000;
+}
+.input-group input:focus-visible {
+  outline: none;
 }
 
 /* ---------- Motion (restrained) ---------- */
