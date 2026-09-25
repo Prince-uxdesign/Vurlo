@@ -69,6 +69,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* The header is sticky (64px): keep focused fields and anchor targets clear of it. */
+  scroll-padding-top: 88px;
 }
 
 body {
@@ -619,8 +621,9 @@ video {
   border-color: var(--color-ink-900);
 }
 
-/* Shortener panel: hard offset edge instead of a soft glow. */
-.shortener-panel {
+/* Shortener + auth panels: hard offset edge instead of a soft glow. */
+.shortener-panel,
+.auth-panel {
   padding: 20px;
   border: 1.5px solid var(--color-ink-900);
   border-radius: var(--radius-lg);
@@ -628,9 +631,38 @@ video {
   box-shadow: 5px 5px 0 var(--color-ink-900);
 }
 @media (min-width: 640px) {
-  .shortener-panel {
+  .shortener-panel,
+  .auth-panel {
     padding: 24px;
   }
+}
+@media (min-width: 768px) {
+  .auth-panel {
+    padding: 32px;
+  }
+}
+
+/* Room for the show/hide button inside a password field (44px target). */
+.flat-ui .input.input-with-action {
+  padding-right: 56px;
+}
+
+/* Search field: room for the leading icon and the clear button. */
+.flat-ui .input.links-search-input {
+  padding-left: 42px;
+  padding-right: 12px;
+}
+/* Room for the clear button only when there is something to clear. */
+.flat-ui .input.links-search-input.has-clear {
+  padding-right: 48px;
+}
+
+/* Focused fields scroll to sit clear of the edges, so an on-screen keyboard
+   (or the sticky header) never covers a field or the message under it. */
+.flat-ui .input,
+.flat-ui .select,
+.input-group {
+  scroll-margin-block: 96px;
 }
 
 /* Prefix + input as one control (alias field). */
@@ -670,6 +702,54 @@ video {
 }
 .input-group input:focus-visible {
   outline: none;
+}
+
+/* ---------- Dialog (native <dialog>) ---------- */
+
+.dialog {
+  margin: auto;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+}
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+/* Bottom sheet on phones: anchored to the bottom edge, full width. */
+@media (max-width: 639px) {
+  .dialog-sheet {
+    margin: auto 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: 88dvh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-bottom: none;
+  }
+}
+
+/* Longer forms: full screen on phones, a centered panel from `sm` up. The
+   panel itself doesn't scroll; DialogPanel's body does, between a pinned
+   header and footer. */
+.dialog-panel {
+  overflow: hidden;
+  width: min(100% - 3rem, 40rem);
+  max-width: none;
+  max-height: min(100dvh - 3rem, 52rem);
+}
+@media (max-width: 639px) {
+  .dialog-panel {
+    margin: 0;
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    border: none;
+    border-radius: 0;
+  }
+}
+@media (min-width: 1024px) {
+  .dialog-panel {
+    width: min(100% - 4rem, 42rem);
+  }
 }
 
 /* ---------- Motion (restrained) ---------- */

@@ -1,90 +1,179 @@
 "use client";
 
-import { ArrowRight, ChevronDown, CircleAlert } from "lucide-react";
-import { useRef, useState } from "react";
+import { ArrowRight, ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { siteConfig } from "@/config/site";
+import type { CreatedLinkPayload } from "@/lib/links/api-types";
+import { ACTIVE_LINK_LIMIT } from "@/lib/links/list-params";
 import { cn } from "@/lib/utils/cn";
 import {
-  applyUtm,
-  expirationOptions,
+  DEFAULT_EXPIRATION,
+  accountExpirationOptions,
+  anonymousExpirationOptions,
+  findUtmConflicts,
+  isSchemeless,
   normalizeDestination,
   validateAlias,
+  validateUtm,
 } from "@/lib/validation/link-input";
 import type { ExpirationOption, UtmParams } from "@/lib/validation/link-input";
 import { createLink } from "./create-link";
-import type { CreatedLink } from "./create-link";
+import { FieldError } from "./field-error";
+import { ShortenerOptions } from "./shortener-options";
 import { ShortenerResult } from "./shortener-result";
+import { useAliasAvailability } from "./use-alias-availability";
+import type { AliasState } from "./use-alias-availability";
 
-type Status = "idle" | "loading" | "success";
+type Status = "idle" | "creating" | "success";
 
 interface Errors {
   destination?: string;
   alias?: string;
+  utm?: string;
   form?: string;
 }
 
 const emptyUtm: UtmParams = { source: "", medium: "", campaign: "" };
+const SLOW_NOTICE_MS = 3000;
 
 /**
- * Hero shortener. State machine: idle → loading → success (errors stay idle).
- * Link creation goes through `createLink` only — see ./create-link.ts.
+ * Hero shortener. idle → creating → success. Validation is synchronous and
+ * instant ("validating" has no visible state of its own); errors keep the
+ * form in idle with the user's input intact.
  */
-export function ShortenerWidget() {
+interface ShortenerWidgetProps {
+  isSignedIn?: boolean;
+  /** Called after a link is created (the dashboard refreshes its stats and lists). */
+  onCreated?: () => void;
+  /** Signed-in account is at its active-link limit: explain instead of offering a form that will fail. */
+  limitReached?: boolean;
+}
+
+export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = false }: ShortenerWidgetProps) {
+  const expirationChoices = isSignedIn ? accountExpirationOptions : anonymousExpirationOptions;
   const [status, setStatus] = useState<Status>("idle");
   const [destination, setDestination] = useState("");
   const [alias, setAlias] = useState("");
-  const [expiration, setExpiration] = useState<ExpirationOption>("never");
+  const [expiration, setExpiration] = useState<ExpirationOption>(DEFAULT_EXPIRATION);
   const [utm, setUtm] = useState<UtmParams>(emptyUtm);
   const [showOptions, setShowOptions] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
-  const [link, setLink] = useState<CreatedLink | null>(null);
+  const [link, setLink] = useState<CreatedLinkPayload | null>(null);
+  const [slow, setSlow] = useState(false);
+  // Aliases the server has told us are taken (e.g. lost a race after the
+  // availability check said "available"). Keeps the status line truthful.
+  const [takenAliases, setTakenAliases] = useState<string[]>([]);
 
   const destinationRef = useRef<HTMLInputElement>(null);
   const aliasRef = useRef<HTMLInputElement>(null);
+  const utmRef = useRef<HTMLInputElement>(null);
+  const submitting = useRef(false); // blocks double-submits before state updates
 
-  const isLoading = status === "loading";
+  const checkedAlias = useAliasAvailability(showOptions ? alias : "");
+  const normalizedAlias = alias.trim().toLowerCase();
+  const aliasState: AliasState = takenAliases.includes(normalizedAlias)
+    ? { kind: "taken" }
+    : checkedAlias;
+  const isCreating = status === "creating";
+
+  useEffect(() => {
+    if (!isCreating) return;
+    const timer = setTimeout(() => setSlow(true), SLOW_NOTICE_MS);
+    return () => {
+      clearTimeout(timer);
+      setSlow(false);
+    };
+  }, [isCreating]);
+
+  const destinationCheck = normalizeDestination(destination);
+  const showSchemeHint =
+    destinationCheck.ok && isSchemeless(destination) && !errors.destination;
+  const utmConflicts = destinationCheck.ok ? findUtmConflicts(destinationCheck.value, utm) : [];
+  const expiryLabel =
+    expirationChoices.find((option) => option.value === expiration)?.label ?? "In 30 days";
+
+  /**
+   * Keep the message on screen. With a mobile keyboard open the visible
+   * area is small and errors render below the focused field, so scroll the
+   * message (not the page) into view after it mounts.
+   */
+  function revealError(id: string) {
+    requestAnimationFrame(() =>
+      document.getElementById(id)?.scrollIntoView({ block: "nearest" }),
+    );
+  }
+
+  function focusOptionField(field: "alias" | "utm") {
+    setShowOptions(true);
+    requestAnimationFrame(() => {
+      (field === "alias" ? aliasRef.current : utmRef.current)?.focus();
+      revealError(field === "alias" ? "alias-status" : "utm-error");
+    });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isLoading) return;
+    if (submitting.current) return;
 
-    const destinationCheck = normalizeDestination(destination);
     const aliasCheck = validateAlias(alias);
-    const nextErrors: Errors = {};
-    if (!destinationCheck.ok) nextErrors.destination = destinationCheck.error;
-    if (!aliasCheck.ok) nextErrors.alias = aliasCheck.error;
+    const utmCheck = validateUtm(utm);
+    const next: Errors = {};
+    if (!destinationCheck.ok) next.destination = destinationCheck.error;
+    if (!utmCheck.ok) next.utm = utmCheck.error;
+    // Alias problems we already know about (bad format, reserved, taken) are
+    // explained by the live status line under the field. Stop and move focus
+    // there instead of repeating the same message a second time.
+    const aliasBlocked = !aliasCheck.ok || aliasState.kind === "taken";
 
-    if (!destinationCheck.ok || !aliasCheck.ok) {
-      setErrors(nextErrors);
-      if (nextErrors.destination) {
+    if (next.destination || next.utm || aliasBlocked) {
+      setErrors(next);
+      if (next.destination) {
         destinationRef.current?.focus();
-      } else {
-        setShowOptions(true);
-        // Options may be collapsed; focus once the alias field is mounted.
-        requestAnimationFrame(() => aliasRef.current?.focus());
-      }
+        revealError("destination-error");
+      } else focusOptionField(aliasBlocked ? "alias" : "utm");
       return;
     }
 
+    submitting.current = true;
     setErrors({});
-    setStatus("loading");
+    setStatus("creating");
+
     const response = await createLink({
-      destination: applyUtm(destinationCheck.value, utm),
-      alias: aliasCheck.value,
+      destination,
+      alias: alias.trim() || undefined,
       expiration,
+      utm,
     });
+    submitting.current = false;
 
     if (!response.ok) {
       setStatus("idle");
-      setErrors({ [response.field]: response.error });
+      const message = response.error;
+      if (response.field === "destination") {
+        setErrors({ destination: message });
+        destinationRef.current?.focus();
+        revealError("destination-error");
+      } else if (response.code === "alias_taken") {
+        setTakenAliases((current) => [...current, normalizedAlias]);
+        focusOptionField("alias");
+      } else if (response.field === "alias") {
+        setErrors({ alias: message });
+        focusOptionField("alias");
+      } else if (response.field === "utm") {
+        setErrors({ utm: message });
+        focusOptionField("utm");
+      } else {
+        setErrors({ form: message });
+        revealError("form-error");
+      }
       return;
     }
     setLink(response.link);
     setStatus("success");
+    onCreated?.();
   }
 
   function reset() {
@@ -93,13 +182,11 @@ export function ShortenerWidget() {
     setDestination("");
     setAlias("");
     setUtm(emptyUtm);
-    setExpiration("never");
+    setExpiration(DEFAULT_EXPIRATION);
     setErrors({});
+    setTakenAliases([]);
     requestAnimationFrame(() => destinationRef.current?.focus());
   }
-
-  const updateUtm = (key: keyof UtmParams) => (value: string) =>
-    setUtm((current) => ({ ...current, [key]: value }));
 
   if (status === "success" && link) {
     return (
@@ -109,12 +196,24 @@ export function ShortenerWidget() {
     );
   }
 
+  if (limitReached) {
+    return (
+      <div id="shorten" className="shortener-panel scroll-mt-24">
+        <h2 className="text-h3">Shorten a link</h2>
+        <p role="status" className="mt-3 text-(--color-muted)">
+          You&apos;re at the limit of {ACTIVE_LINK_LIMIT} active links. Disable, archive or delete a link (or wait for one to expire) to make room for a new one.
+        </p>
+        <Link href="/links?status=active" className="btn-outline mt-5 w-full sm:w-auto">
+          Manage active links
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div id="shorten" className="shortener-panel scroll-mt-24">
-      <form onSubmit={handleSubmit} noValidate aria-busy={isLoading}>
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-h3">Shorten a link</h2>
-        </div>
+      <form onSubmit={handleSubmit} noValidate aria-busy={isCreating}>
+        <h2 className="text-h3">Shorten a link</h2>
 
         <label htmlFor="destination-url" className="text-label mt-4 block">
           Paste your long URL
@@ -130,10 +229,10 @@ export function ShortenerWidget() {
             spellCheck={false}
             placeholder="https://example.com/a-very-long-page"
             value={destination}
-            readOnly={isLoading}
+            readOnly={isCreating}
             hasError={Boolean(errors.destination)}
             aria-invalid={errors.destination ? true : undefined}
-            aria-describedby={errors.destination ? "destination-error" : undefined}
+            aria-describedby="destination-hint destination-error"
             onChange={(event) => {
               setDestination(event.target.value);
               if (errors.destination) setErrors((e) => ({ ...e, destination: undefined }));
@@ -143,19 +242,32 @@ export function ShortenerWidget() {
           <Button
             type="submit"
             variant="primary"
-            loading={isLoading}
+            loading={isCreating}
             className="min-h-12 sm:px-6"
           >
-            {isLoading ? "Creating…" : "Create link"}
-            {isLoading ? null : <ArrowRight size={18} aria-hidden="true" />}
+            {isCreating ? "Creating…" : "Create link"}
+            {isCreating ? null : <ArrowRight size={18} aria-hidden="true" />}
           </Button>
         </div>
+        <p id="destination-hint" className="field-helper mt-2 break-all">
+          {showSchemeHint && destinationCheck.ok
+            ? `No https:// needed. We'll use ${destinationCheck.value}`
+            : null}
+        </p>
         <FieldError id="destination-error" message={errors.destination} />
-        {errors.form ? <FieldError id="form-error" message={errors.form} /> : null}
+
+        <div role="status" className="text-small mt-2 text-(--color-muted)">
+          {isCreating
+            ? slow
+              ? "Still working. This is taking longer than usual."
+              : "Creating your link…"
+            : null}
+        </div>
+        <FieldError id="form-error" message={errors.form} />
 
         <button
           type="button"
-          className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-(--radius-md) text-[15px] font-semibold hover:underline"
+          className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-(--radius-md) text-[15px] font-semibold hover:underline"
           aria-expanded={showOptions}
           aria-controls="shortener-options"
           onClick={() => setShowOptions((value) => !value)}
@@ -169,115 +281,41 @@ export function ShortenerWidget() {
         </button>
 
         {showOptions ? (
-          <div
+          <ShortenerOptions
             id="shortener-options"
-            className="mt-2 grid gap-5 border-t border-(--color-border) pt-5"
-          >
-            <div className="grid gap-1.5">
-              <label htmlFor="custom-alias" className="text-label">
-                Custom alias{" "}
-                <span className="font-normal text-(--color-muted)">(optional)</span>
-              </label>
-              <div className={cn("input-group", errors.alias && "error")}>
-                <span className="input-group-prefix" aria-hidden="true">
-                  {siteConfig.shortLinkHost}/
-                </span>
-                <input
-                  ref={aliasRef}
-                  id="custom-alias"
-                  type="text"
-                  autoComplete="off"
-                  autoCapitalize="none"
-                  spellCheck={false}
-                  placeholder="my-link"
-                  value={alias}
-                  readOnly={isLoading}
-                  aria-invalid={errors.alias ? true : undefined}
-                  aria-describedby={errors.alias ? "alias-error" : "alias-help"}
-                  onChange={(event) => {
-                    setAlias(event.target.value);
-                    if (errors.alias) setErrors((e) => ({ ...e, alias: undefined }));
-                  }}
-                />
-              </div>
-              {errors.alias ? (
-                <FieldError id="alias-error" message={errors.alias} />
-              ) : (
-                <p id="alias-help" className="field-helper">
-                  Leave blank and we&apos;ll pick one for you.
-                </p>
-              )}
-            </div>
-
-            <div className="grid gap-1.5">
-              <label htmlFor="expiration" className="text-label">
-                Expires{" "}
-                <span className="font-normal text-(--color-muted)">(optional)</span>
-              </label>
-              <Select
-                id="expiration"
-                value={expiration}
-                disabled={isLoading}
-                onChange={(event) =>
-                  setExpiration(event.target.value as ExpirationOption)
-                }
-              >
-                {expirationOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <fieldset className="grid gap-3">
-              <legend className="text-label">
-                UTM parameters{" "}
-                <span className="font-normal text-(--color-muted)">(optional)</span>
-              </legend>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {(
-                  [
-                    ["source", "Source", "newsletter"],
-                    ["medium", "Medium", "email"],
-                    ["campaign", "Campaign", "spring-launch"],
-                  ] as const
-                ).map(([key, label, placeholder]) => (
-                  <div key={key} className="grid gap-1.5">
-                    <label htmlFor={`utm-${key}`} className="text-small font-medium">
-                      {label}
-                    </label>
-                    <Input
-                      id={`utm-${key}`}
-                      autoComplete="off"
-                      autoCapitalize="none"
-                      spellCheck={false}
-                      placeholder={placeholder}
-                      value={utm[key]}
-                      readOnly={isLoading}
-                      onChange={(event) => updateUtm(key)(event.target.value)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </fieldset>
-          </div>
+            disabled={isCreating}
+            alias={alias}
+            aliasState={aliasState}
+            aliasError={errors.alias}
+            aliasRef={aliasRef}
+            onAliasChange={(value) => {
+              setAlias(value);
+              if (errors.alias) setErrors((e) => ({ ...e, alias: undefined }));
+            }}
+            expiration={expiration}
+            expirationChoices={expirationChoices}
+            isSignedIn={isSignedIn}
+            onExpirationChange={setExpiration}
+            utm={utm}
+            utmError={errors.utm}
+            utmConflicts={utmConflicts}
+            utmSourceRef={utmRef}
+            onUtmChange={(key, value) => {
+              setUtm((current) => ({ ...current, [key]: value }));
+              if (errors.utm) setErrors((e) => ({ ...e, utm: undefined }));
+            }}
+          />
         ) : null}
-      </form>
-    </div>
-  );
-}
 
-function FieldError({ id, message }: { id: string; message?: string }) {
-  // Always rendered so the live region exists before the message appears.
-  return (
-    <div id={id} role="alert" className={message ? "mt-2" : undefined}>
-      {message ? (
-        <p className="field-error">
-          <CircleAlert size={16} aria-hidden="true" className="mt-0.5 flex-none" />
-          <span>{message}</span>
+        <p className="text-small mt-4 border-t border-(--color-border) pt-4 text-(--color-muted)">
+          {isSignedIn
+            ? "Saved to your account. "
+            : "No account needed. "}
+          {expiration === "never"
+            ? "This link won't expire."
+            : `This link will expire ${expiryLabel.toLowerCase()}.`}
         </p>
-      ) : null}
+      </form>
     </div>
   );
 }

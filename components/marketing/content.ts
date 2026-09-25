@@ -105,12 +105,12 @@ export const faqs = [
   {
     question: "Can I change where a short link goes?",
     answer:
-      "Yes, for links in your account. The short URL stays the same while the destination changes.",
+      "Not yet. Editing destinations arrives with accounts, and the short URL will stay the same when it does.",
   },
   {
     question: "Do short links expire?",
     answer:
-      "Only if you set an expiry. Otherwise a link stays active until you disable or delete it.",
+      "Yes. A link made without an account expires within 30 days. When you create one, choose 24 hours, 7 days or 30 days.",
   },
   {
     question: "What happens when a link expires?",

@@ -19,3 +19,17 @@ export function getSupabaseAnonKey(): string | undefined {
 export function isSupabaseConfigured(): boolean {
   return Boolean(getSupabaseUrl() && getSupabaseAnonKey());
 }
+
+/**
+ * Server-only secret. Deliberately NOT prefixed with NEXT_PUBLIC_, so Next.js
+ * never inlines it into browser bundles. Only import this from server code
+ * (see lib/supabase/admin.ts, which enforces that with `server-only`).
+ */
+export function getSupabaseServiceRoleKey(): string | undefined {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || undefined;
+}
+
+/** Server-only salt mixed into rate-limit keys so raw IPs are never stored. */
+export function getRateLimitSalt(): string {
+  return process.env.RATE_LIMIT_SALT || "vurlo-dev-salt";
+}

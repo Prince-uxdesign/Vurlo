@@ -1,0 +1,43 @@
+# Vurlo Supabase configuration (Phase 3 auth).
+# Local dev: `supabase start` reads this file. For a hosted project, apply the
+# same values in Dashboard → Authentication (URL Configuration, Providers,
+# Email Templates, Password). See supabase/README.md.
+project_id = "vurlo"
+
+[auth]
+enabled = true
+# The site's public origin. Must match NEXT_PUBLIC_APP_URL.
+site_url = "http://localhost:3000"
+# Where Supabase may redirect after OAuth. Keep this list exact and short.
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+jwt_expiry = 3600
+enable_signup = true
+# Rotating refresh tokens limit the damage if one is ever stolen.
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+minimum_password_length = 8
+
+[auth.email]
+enable_signup = true
+# REQUIRED for the no-enumeration signup flow: with confirmations on, an
+# existing email gets the same response as a new one. Turning this off makes
+# duplicate signups return an error, which reveals registered addresses.
+enable_confirmations = true
+double_confirm_changes = true
+# Email links work once and expire after one hour.
+otp_expiry = 3600
+max_frequency = "60s"
+
+[auth.email.template.confirmation]
+subject = "Confirm your Vurlo account"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your Vurlo password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+skip_nonce_check = false

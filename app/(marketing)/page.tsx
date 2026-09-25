@@ -4,6 +4,7 @@ import { BenefitsSection } from "@/components/marketing/benefits-section";
 import { FaqSection } from "@/components/marketing/faq-section";
 import { FinalCta } from "@/components/marketing/final-cta";
 import { Hero } from "@/components/marketing/hero";
+import { getCurrentUserId } from "@/lib/auth/session";
 import { QrSection } from "@/components/marketing/qr-section";
 import { SecuritySection } from "@/components/marketing/security-section";
 import { UseCasesSection } from "@/components/marketing/use-cases-section";
@@ -15,10 +16,11 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const isSignedIn = Boolean(await getCurrentUserId());
   return (
     <>
-      <Hero />
+      <Hero isSignedIn={isSignedIn} />
       <BenefitsSection />
       <AnalyticsSection />
       <QrSection />

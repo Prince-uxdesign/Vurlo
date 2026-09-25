@@ -25,7 +25,7 @@ export function MarketingFooter() {
                     {link.href ? (
                       <a
                         href={link.href}
-                        className="text-small inline-flex min-h-11 items-center text-white/75 hover:text-white hover:underline"
+                        className="text-small inline-flex min-h-11 min-w-11 items-center text-white/75 hover:text-white hover:underline"
                       >
                         {link.label}
                       </a>

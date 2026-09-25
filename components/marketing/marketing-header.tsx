@@ -11,21 +11,15 @@ import { navLinks } from "./content";
 const linkClass =
   "inline-flex min-h-11 items-center rounded-(--radius-md) px-3 text-[15px] font-medium hover:bg-(--color-mist-100)";
 
-/** Sign-in has no route yet; rendered as an inert, labelled control. */
-function SignIn({ className }: { className?: string }) {
+function AccountLink({ isSignedIn, className }: { isSignedIn: boolean; className?: string }) {
   return (
-    <button
-      type="button"
-      disabled
-      title="Accounts are coming soon"
-      className={`btn-ghost ${className ?? ""}`}
-    >
-      Sign in
-    </button>
+    <Link href={isSignedIn ? "/dashboard" : "/login"} className={`btn-ghost ${className ?? ""}`}>
+      {isSignedIn ? "Dashboard" : "Sign in"}
+    </Link>
   );
 }
 
-export function MarketingHeader() {
+export function MarketingHeader({ isSignedIn }: { isSignedIn: boolean }) {
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
@@ -79,7 +73,7 @@ export function MarketingHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <SignIn />
+          <AccountLink isSignedIn={isSignedIn} />
           <CreateLinkCta>Create a short link</CreateLinkCta>
         </div>
 
@@ -114,7 +108,7 @@ export function MarketingHeader() {
               </a>
             ))}
             <div className="mt-2 grid gap-2 border-t border-(--color-border) pt-3">
-              <SignIn className="w-full border border-(--color-mist-300)" />
+              <AccountLink isSignedIn={isSignedIn} className="w-full border border-(--color-mist-300)" />
               <CreateLinkCta className="w-full" onNavigate={() => setOpen(false)}>
                 Create a short link
               </CreateLinkCta>

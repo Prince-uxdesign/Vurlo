@@ -1,7 +1,7 @@
 import { Container } from "@/components/ui/container";
 import { ShortenerWidget } from "./shortener/shortener-widget";
 
-export function Hero() {
+export function Hero({ isSignedIn = false }: { isSignedIn?: boolean }) {
   return (
     <section aria-labelledby="hero-title" className="pb-14 pt-8 md:pb-20 md:pt-14">
       <Container className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,540px)] lg:gap-x-14 lg:gap-y-6">
@@ -22,10 +22,7 @@ export function Hero() {
         </div>
 
         <div className="w-full max-w-xl mx-auto lg:max-w-none lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-center">
-          <ShortenerWidget />
-          <p className="text-small mt-3 text-(--color-muted)">
-            No account needed to create a link.
-          </p>
+          <ShortenerWidget isSignedIn={isSignedIn} />
         </div>
 
         <div className="w-full max-w-xl mx-auto lg:max-w-none lg:col-start-1 lg:row-start-2 lg:self-start">
