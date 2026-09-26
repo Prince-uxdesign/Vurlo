@@ -19,7 +19,7 @@ const seed = (user: string, n: number, prefix: string, extra = "") =>
   db.exec(`insert into public.links (slug, destination_url, user_id ${extra ? "," + extra.split("=")[0] : ""})
            select '${prefix}' || lpad(g::text, 3, '0'), 'https://example.com/' || g, '${user}' ${extra ? "," + extra.split("=")[1] : ""} from generate_series(1, ${n}) g`);
 const list = (sub: string, args: string) =>
-  as("authenticated", sub, () => db.query<Record<string, any>>(`select * from public.list_my_links(${args})`)); // eslint-disable-line @typescript-eslint/no-explicit-any
+  as("authenticated", sub, () => db.query<Record<string, unknown>>(`select * from public.list_my_links(${args})`));
 
 before(async () => {
   db = await createTestDb();
@@ -165,11 +165,11 @@ describe("list_my_links()", () => {
 
 describe("my_link_stats()", () => {
   it("counts by effective status for the caller only", async () => {
-    const s = (await as("authenticated", A, () => db.query<Record<string, any>>("select * from public.my_link_stats()"))).rows[0]!; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const s = (await as("authenticated", A, () => db.query<Record<string, unknown>>("select * from public.my_link_stats()"))).rows[0]!;
     assert.equal(Number(s.active), 50);
     assert.equal(Number(s.archived), 2);
     assert.ok(Number(s.total) >= 52);
-    const b = (await as("authenticated", B, () => db.query<Record<string, any>>("select * from public.my_link_stats()"))).rows[0]!; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const b = (await as("authenticated", B, () => db.query<Record<string, unknown>>("select * from public.my_link_stats()"))).rows[0]!;
     assert.equal(Number(b.active), 3); // b-first, alpha, beta
     assert.equal(Number(b.expired), 1);
     assert.equal(Number(b.disabled), 1);
