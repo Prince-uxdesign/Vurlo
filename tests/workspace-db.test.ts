@@ -19,7 +19,7 @@ const seed = (user: string, n: number, prefix: string, extra = "") =>
   db.exec(`insert into public.links (slug, destination_url, user_id ${extra ? "," + extra.split("=")[0] : ""})
            select '${prefix}' || lpad(g::text, 3, '0'), 'https://example.com/' || g, '${user}' ${extra ? "," + extra.split("=")[1] : ""} from generate_series(1, ${n}) g`);
 const list = (sub: string, args: string) =>
-  as("authenticated", sub, () => db.query<Record<string, unknown>>(`select * from public.list_my_links(${args})`));
+  as("authenticated", sub, () => db.query<{ slug: string } & Record<string, unknown>>(`select * from public.list_my_links(${args})`));
 
 before(async () => {
   db = await createTestDb();

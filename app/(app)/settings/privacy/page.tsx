@@ -69,6 +69,7 @@ export default async function PrivacySettingsPage() {
               "Countries come from network data, so VPNs and privacy relays blur them.",
               "“Direct / Unknown” includes typed links, apps and browsers that hide where a visit came from.",
               "Numbers can take up to a minute to update.",
+              "Detailed click records are kept for 90 days, then permanently purged.",
             ]}
           />
         </SettingsCard>

@@ -69,10 +69,12 @@ export default function PrivacyPage() {
 
         <H>Retention and deletion</H>
         <P>
-          Anonymous links expire automatically. Deleting a link stops it working and
-          removes it from your workspace along with its analytics. We do not sell
-          personal data, and we do not share it except as required to operate the
-          service (hosting, database) or comply with the law.
+          Anonymous links expire automatically. Raw click events are retained for 90 days
+          before being permanently purged by automated maintenance. Deleting a link stops
+          it working and removes it from your workspace along with its analytics. Deleting your
+          account permanently removes your profile, links, and click records. We do not sell
+          personal data, and we do not share it except as required to operate the service (hosting,
+          database) or comply with the law.
         </P>
 
         <H>Contact</H>
