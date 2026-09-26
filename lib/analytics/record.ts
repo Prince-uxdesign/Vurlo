@@ -10,7 +10,7 @@ import {
   ipForHashing,
 } from "./classify";
 import { logServerError } from "@/lib/links/log";
-import { createPublicClient } from "@/lib/supabase/public";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getAnalyticsSalt, buildVisitorHash } from "./visitor";
 
 export interface ClickEventParams {
@@ -64,13 +64,17 @@ export function buildClickEvent(
  * links), so a caller can never fabricate events for another link_id or for
  * expired/disabled/deleted/unknown slugs. Failures resolve to null and never
  * throw -- analytics must never break a redirect.
+ *
+ * Service role only (Phase 8A): the function is not executable with the
+ * public anon key, so the only way to create an event is a real redirect
+ * through this server, classified here.
  */
 export async function recordClickEvent(
   slug: string,
   event: ClickEventParams,
   deps: { client?: RpcClient | null } = {},
 ): Promise<string | null> {
-  const client = deps.client === undefined ? createPublicClient() : deps.client;
+  const client = deps.client === undefined ? (createAdminClient() as RpcClient | null) : deps.client;
   if (!client) return null;
   try {
     const { data, error } = await client.rpc("record_link_event", {

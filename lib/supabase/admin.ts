@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { logServerError } from "@/lib/links/log";
 import type { Database } from "@/types/database";
 import { getSupabaseServiceRoleKey, getSupabaseUrl } from "@/lib/utils/env";
+import { SUPABASE_TIMEOUT_MS, fetchWithTimeout } from "./fetch";
 
 /**
  * Privileged Supabase client (service role, bypasses RLS).
@@ -19,6 +20,7 @@ export function createAdminClient() {
   try {
     return createClient<Database>(url, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
+      global: { fetch: fetchWithTimeout(SUPABASE_TIMEOUT_MS.admin) },
     });
   } catch (error) {
     // A malformed URL is a deployment mistake. Degrade to "not configured"

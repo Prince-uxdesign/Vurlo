@@ -28,8 +28,3 @@ export function isSupabaseConfigured(): boolean {
 export function getSupabaseServiceRoleKey(): string | undefined {
   return process.env.SUPABASE_SERVICE_ROLE_KEY || undefined;
 }
-
-/** Server-only salt mixed into rate-limit keys so raw IPs are never stored. */
-export function getRateLimitSalt(): string {
-  return process.env.RATE_LIMIT_SALT || "vurlo-dev-salt";
-}

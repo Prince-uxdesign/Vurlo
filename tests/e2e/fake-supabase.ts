@@ -39,8 +39,8 @@ const verify = (token: string): Record<string, any> | null => {
   return payload.exp * 1000 > Date.now() ? payload : null;
 };
 
-interface User { id: string; email: string; password: string; confirmed: boolean; createdAt: string; provider: string }
-interface Token { email: string; type: string; hash: string; expiresAt: number; used: boolean }
+interface User { id: string; email: string; password: string; confirmed: boolean; createdAt: string; provider: string; newEmail?: string }
+interface Token { email: string; type: string; hash: string; expiresAt: number; used: boolean; userId?: string }
 
 async function main() {
   const db = await createTestDb();
@@ -56,7 +56,7 @@ async function main() {
   const cfg = { confirm: true, ttl: 3600, googleEmail: "google.user@example.com", googleDeny: false, delayMs: 0, fail: false };
 
   const userJson = (u: User) => ({
-    id: u.id, aud: "authenticated", role: "authenticated", email: u.email,
+    id: u.id, aud: "authenticated", role: "authenticated", email: u.email, ...(u.newEmail ? { new_email: u.newEmail } : {}),
     email_confirmed_at: u.confirmed ? u.createdAt : null, phone: "", confirmed_at: u.confirmed ? u.createdAt : null,
     last_sign_in_at: new Date().toISOString(), app_metadata: { provider: u.provider, providers: [u.provider] }, user_metadata: {},
     identities: [{ identity_id: u.id, id: u.id, user_id: u.id, provider: u.provider }], created_at: u.createdAt, updated_at: u.createdAt,
@@ -168,7 +168,18 @@ async function main() {
           const { token_hash, type } = body();
           const t = tokens.find((x) => x.hash === token_hash && x.type === type);
           if (!t || t.used || t.expiresAt < Date.now()) return authErr(403, "otp_expired", "Email link is invalid or has expired");
-          t.used = true; const u = users.get(t.email)!; u.confirmed = true;
+          t.used = true;
+          if (type === "email_change") {
+            // Secure email change: applies once the links sent to BOTH addresses are used.
+            const u = byId.get(t.userId!)!;
+            const pending = tokens.filter((x) => x.type === "email_change" && x.userId === u.id);
+            if (u.newEmail && pending.every((x) => x.used)) {
+              users.delete(u.email); u.email = u.newEmail; u.newEmail = undefined; users.set(u.email, u);
+              await serial(() => db.query("update auth.users set email = $1 where id = $2", [u.email, u.id]));
+            }
+            return json(200, newSession(u));
+          }
+          const u = users.get(t.email)!; u.confirmed = true;
           return json(200, newSession(u));
         }
         if (route === "/user") {
@@ -176,7 +187,13 @@ async function main() {
           const u = byId.get(c.sub)!;
           if (req.method === "GET") return json(200, userJson(u));
           if (req.method === "PUT") {
-            const { password } = body();
+            const { password, email } = body();
+            if (email !== undefined) {
+              const next = String(email).toLowerCase();
+              if (users.has(next)) return authErr(422, "email_exists", "A user with this email address has already been registered");
+              u.newEmail = next;
+              for (const addr of [u.email, next]) { const t = issueToken(addr, "email_change"); t.userId = u.id; }
+            }
             if (password !== undefined) {
               if (String(password).length < 8) return authErr(422, "weak_password", "Password should be at least 8 characters.");
               if (password === u.password) return authErr(422, "same_password", "New password should be different from the old password.");

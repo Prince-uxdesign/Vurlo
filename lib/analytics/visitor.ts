@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { serverSalt } from "@/lib/utils/secrets";
 
 /**
  * Phase 6A: privacy-preserving, APPROXIMATE unique-visitor signal.
@@ -59,7 +60,11 @@ export function buildVisitorHash({ ip, userAgent, salt, now = new Date() }: Visi
     .digest("hex");
 }
 
-/** Server-only salt. A distinct analytics salt is preferred; the rate-limit salt works as a fallback. */
+/**
+ * Server-only salt. A distinct analytics salt is preferred; the rate-limit
+ * salt works as a fallback. Never a public value in production (see
+ * lib/utils/secrets.ts).
+ */
 export function getAnalyticsSalt(): string {
-  return process.env.ANALYTICS_SALT || process.env.RATE_LIMIT_SALT || "vurlo-dev-salt";
+  return serverSalt("ANALYTICS_SALT", process.env.RATE_LIMIT_SALT);
 }

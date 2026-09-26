@@ -3,7 +3,8 @@
  *
  * Two layers use this list: application validation (this file) and the
  * `public.is_reserved_slug()` database function, which enforces it with a
- * CHECK constraint. `tests/links-db.test.ts` fails if the two drift apart,
+ * CHECK constraint (latest definition:
+ * supabase/migrations/20260926110000_security_hardening.sql). `tests/links-db.test.ts` fails if the two drift apart,
  * so change both together (new migration + this file).
  *
  * Slugs must be 3+ characters and cannot contain dots, so one- and
@@ -34,6 +35,36 @@ export const RESERVED_SLUGS = [
   "preview",
   "qr",
   "analytics",
+  "forgot-password",
+  "reset-password",
+  "callback",
+  "confirm",
+  "error",
+  "billing",
+  "team",
+  "teams",
+  "user",
+  "users",
+  "home",
+  "index",
+  // Account and security words: convincing phishing links on our own domain
+  "password",
+  "reset",
+  "verify",
+  "verification",
+  "oauth",
+  "sso",
+  "session",
+  "sign-in",
+  "sign-up",
+  "log-in",
+  "log-out",
+  "sign-out",
+  "signout",
+  "official",
+  "trust",
+  "safety",
+  "report-abuse",
   // Marketing / informational pages
   "about",
   "help",

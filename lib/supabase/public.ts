@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/utils/env";
+import { SUPABASE_TIMEOUT_MS, fetchWithTimeout } from "./fetch";
 
 /**
  * Cookie-less anon client for anonymous, read-only server work such as
@@ -14,6 +15,7 @@ export function createPublicClient() {
   try {
     return createClient<Database>(url, anonKey, {
       auth: { persistSession: false, autoRefreshToken: false },
+      global: { fetch: fetchWithTimeout(SUPABASE_TIMEOUT_MS.redirect) },
     });
   } catch {
     return null; // treated as "unavailable" by the redirect engine

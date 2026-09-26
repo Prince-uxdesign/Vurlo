@@ -11,7 +11,13 @@ export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 72;
 const MAX_EMAIL_LENGTH = 254;
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+/**
+ * Practical address shape: the characters an unquoted address may use
+ * (letters and digits in any script, plus RFC 5322 atext), and a dotted
+ * domain. Refuses markup and separators like < > ( ) , ; : " [ ] \ that no
+ * real sign-up needs. Supabase Auth validates again.
+ */
+const EMAIL_PATTERN = /^[\p{L}\p{N}.!#$%&'*+/=?^_`{|}~-]+@[\p{L}\p{N}-]+(\.[\p{L}\p{N}-]+)*\.[\p{L}]{2,}$/u;
 
 const COMMON_PASSWORDS = new Set([
   "password", "password1", "password123", "12345678", "123456789", "1234567890",

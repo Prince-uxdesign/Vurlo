@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils/cn";
 const ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/links", label: "Links" },
-  { href: "/account", label: "Account" },
+  { href: "/settings", label: "Settings" },
 ] as const;
 
 /** Primary app navigation. `aria-current="page"` marks where you are. */

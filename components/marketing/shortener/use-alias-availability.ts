@@ -10,11 +10,12 @@ export type AliasState =
   | { kind: "available" }
   | { kind: "taken" }
   | { kind: "invalid"; message: string }
-  | { kind: "unchecked" }; // couldn't check; creating will still verify
+  | { kind: "unchecked" } // couldn't check; creating will still verify
+  | { kind: "slow"; message: string }; // checks are being throttled; creating still verifies
 
 const DEBOUNCE_MS = 450;
 
-type Settled = { alias: string; kind: "available" | "taken" | "unchecked" };
+type Settled = { alias: string; kind: "available" | "taken" | "unchecked" } | { alias: string; kind: "slow"; message: string };
 
 /**
  * Live alias feedback. Format and reserved-word problems are answered
@@ -37,6 +38,10 @@ export function useAliasAvailability(raw: string): AliasState {
           { signal: controller.signal },
         );
         const data = (await response.json().catch(() => null)) as AliasCheckResponse | null;
+        if (data?.status === "rate_limited") {
+          setSettled({ alias, kind: "slow", message: data.error ?? "Availability will be confirmed when you create the link." });
+          return;
+        }
         const kind =
           data?.status === "available" || data?.status === "taken"
             ? data.status
@@ -56,6 +61,8 @@ export function useAliasAvailability(raw: string): AliasState {
 
   if (!raw.trim()) return { kind: "idle" };
   if (!local.ok) return { kind: "invalid", message: local.error };
-  if (settled && settled.alias === alias) return { kind: settled.kind };
+  if (settled && settled.alias === alias) {
+    return settled.kind === "slow" ? { kind: "slow", message: settled.message } : { kind: settled.kind };
+  }
   return { kind: "checking" };
 }

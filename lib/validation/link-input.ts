@@ -3,6 +3,7 @@
  * create-link service. Client checks are for UX only: the server runs the
  * same functions again and the database constraints are the last line.
  */
+import { siteConfig } from "@/config/site";
 import { isReservedSlug } from "@/lib/links/reserved-slugs";
 import type {
   AliasValidation,
@@ -50,6 +51,56 @@ const EXPIRATION_MS: Record<Exclude<ExpirationOption, "never">, number> = {
   "7d": 7 * 24 * 60 * 60 * 1000,
   "30d": 30 * 24 * 60 * 60 * 1000,
 };
+
+/**
+ * Special-use names that only resolve inside someone's own network (or
+ * never): a public short link has no business sending visitors there.
+ */
+const PRIVATE_SUFFIXES = ["localhost", "local", "internal", "localdomain", "home.arpa", "intranet", "lan", "test", "invalid"];
+
+/** True for IPv4 ranges that aren't publicly routable (RFC 1918, loopback, link-local, CGNAT, multicast…). */
+function isPrivateIpv4(host: string): boolean {
+  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+  if (!m) return false;
+  const [a, b] = [Number(m[1]), Number(m[2])];
+  return (
+    a === 0 || a === 10 || a === 127 || a >= 224 ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 192 && b === 0 && Number(m[3]) === 0) ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 198 && (b === 18 || b === 19))
+  );
+}
+
+function ownHostname(): string | null {
+  try {
+    return new URL(siteConfig.url).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Why a parsed http(s) URL can't be a destination, or null if it can.
+ * Runs on the WHATWG-normalized hostname, so `0x7f.1`, `2130706433` and
+ * `127.1` have already become `127.0.0.1`, and IDNs are punycode.
+ *  - Our own host (and subdomains): a short link to a short link makes
+ *    loops, and chains hide the real destination from link scanners.
+ *  - Private / loopback / special-use hosts: only reachable from inside a
+ *    visitor's network (routers, intranets), so only useful for attacks.
+ */
+export function blockedDestinationReason(url: URL, own: string | null = ownHostname()): string | null {
+  const host = url.hostname.toLowerCase().replace(/\.$/, "");
+  if (own && (host === own || host.endsWith(`.${own}`))) {
+    return "Links can't point to another Vurlo link. Use the final destination instead.";
+  }
+  if (isPrivateIpv4(host) || PRIVATE_SUFFIXES.some((s) => host === s || host.endsWith(`.${s}`))) {
+    return "That address is on a private network, so it can't be shortened.";
+  }
+  return null;
+}
 
 const invalidUrl = (error: string): DestinationValidation => ({
   ok: false,
@@ -109,11 +160,15 @@ export function normalizeDestination(raw: string): DestinationValidation {
   if (url.username || url.password) {
     return invalidUrl("URLs with a username or password can't be shortened.");
   }
-  if (!url.hostname.includes(".")) {
+  // At least two non-empty labels ("example.com"; a trailing root dot is fine).
+  // Rejects bare hosts, ".", "..example" and "example..com".
+  if (!/^[^.]+(\.[^.]+)+\.?$/.test(url.hostname)) {
     return invalidUrl(
       "That doesn't look like a valid web address. Try https://example.com/page.",
     );
   }
+  const blocked = blockedDestinationReason(url);
+  if (blocked) return invalidUrl(blocked);
   return { ok: true, value: url.toString() };
 }
 
@@ -186,7 +241,9 @@ export function resolveExpiration(
 /**
  * Last check before a redirect. Stored destinations were validated on the
  * way in and are constrained by the database, but redirects trust nothing:
- * only absolute http(s) URLs without embedded credentials are followed.
+ * only absolute http(s) URLs without embedded credentials are followed, and
+ * never to ourselves or a private network (an owner can edit their row
+ * directly through the API, which skips the app-level checks above).
  */
 export function isSafeRedirectUrl(value: string): boolean {
   if (!/^https?:\/\//i.test(value)) return false;
@@ -196,7 +253,8 @@ export function isSafeRedirectUrl(value: string): boolean {
       (url.protocol === "http:" || url.protocol === "https:") &&
       !url.username &&
       !url.password &&
-      url.hostname.length > 0
+      url.hostname.length > 0 &&
+      blockedDestinationReason(url) === null
     );
   } catch {
     return false;

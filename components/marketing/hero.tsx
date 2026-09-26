@@ -1,7 +1,8 @@
 import { Container } from "@/components/ui/container";
+import type { ExpirationOption } from "@/lib/links/types";
 import { ShortenerWidget } from "./shortener/shortener-widget";
 
-export function Hero({ isSignedIn = false }: { isSignedIn?: boolean }) {
+export function Hero({ isSignedIn = false, defaultExpiration }: { isSignedIn?: boolean; defaultExpiration?: ExpirationOption }) {
   return (
     <section aria-labelledby="hero-title" className="pb-14 pt-8 md:pb-20 md:pt-14">
       <Container className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,540px)] lg:gap-x-14 lg:gap-y-6">
@@ -22,7 +23,7 @@ export function Hero({ isSignedIn = false }: { isSignedIn?: boolean }) {
         </div>
 
         <div className="w-full max-w-xl mx-auto lg:max-w-none lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-center">
-          <ShortenerWidget isSignedIn={isSignedIn} />
+          <ShortenerWidget isSignedIn={isSignedIn} defaultExpiration={defaultExpiration} />
         </div>
 
         <div className="w-full max-w-xl mx-auto lg:max-w-none lg:col-start-1 lg:row-start-2 lg:self-start">

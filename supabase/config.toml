@@ -36,6 +36,12 @@ content_path = "./supabase/templates/confirmation.html"
 subject = "Reset your Vurlo password"
 content_path = "./supabase/templates/recovery.html"
 
+# Settings → Account → Change email. With double_confirm_changes, this is
+# sent to both the current and the new address.
+[auth.email.template.email_change]
+subject = "Confirm your new Vurlo email"
+content_path = "./supabase/templates/email-change.html"
+
 [auth.external.google]
 enabled = true
 client_id = "env(GOOGLE_CLIENT_ID)"

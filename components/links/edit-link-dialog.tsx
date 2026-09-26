@@ -354,6 +354,8 @@ function Availability({ state, url }: { state: ReturnType<typeof useAliasAvailab
       return <p className="field-error"><CircleAlert size={16} aria-hidden="true" className="mt-0.5 flex-none" /><span>{state.message}</span></p>;
     case "unchecked":
       return <p className="field-helper flex items-start gap-1.5"><Info size={16} aria-hidden="true" className="mt-0.5 flex-none" /><span>We&apos;ll confirm it&apos;s free when you save.</span></p>;
+    case "slow":
+      return <p className="field-helper flex items-start gap-1.5"><Info size={16} aria-hidden="true" className="mt-0.5 flex-none" /><span>You&apos;re checking addresses quickly. We&apos;ll confirm it&apos;s free when you save.</span></p>;
     default:
       return null;
   }

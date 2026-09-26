@@ -23,9 +23,10 @@ before(async () => {
 after(async () => { await db.close(); });
 
 describe("profiles", () => {
-  it("are created by trigger with id, email and created_at only", async () => {
+  it("are created by trigger with id, email, created_at and default preferences only", async () => {
     const { rows } = await db.query<Record<string, unknown>>("select * from public.profiles where id = $1", [A]);
-    assert.deepEqual(Object.keys(rows[0]!).sort(), ["created_at", "email", "id"]);
+    assert.deepEqual(Object.keys(rows[0]!).sort(), ["created_at", "default_link_expiration", "email", "id"]);
+    assert.equal(rows[0]!.default_link_expiration, "30d");
     assert.equal(rows[0]!.email, "a@example.com");
   });
 

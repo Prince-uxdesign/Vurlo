@@ -9,7 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json",
     "test": "tsx --conditions react-server --test tests/*.test.ts && npm run test:ui",
-    "test:ui": "tsx --test tests/analytics-dashboard.test.tsx"
+    "test:ui": "tsx --test tests/*.test.tsx"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

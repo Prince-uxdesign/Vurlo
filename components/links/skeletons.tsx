@@ -18,6 +18,7 @@ export function LinkRowSkeleton() {
           <div className="@2xl:col-start-1 @2xl:row-start-2 @4xl:col-start-2 @4xl:row-start-1">
             <Bone className="mb-2 hidden h-6 w-20 @4xl:block" />
             <div className="grid gap-y-1">
+              <Bone className="h-[21px] w-24" />
               <Bone className="h-[21px] w-44" />
               <Bone className="h-[21px] w-56" />
             </div>

@@ -54,14 +54,20 @@ interface ShortenerWidgetProps {
   onCreated?: () => void;
   /** Signed-in account is at its active-link limit: explain instead of offering a form that will fail. */
   limitReached?: boolean;
+  /** Panel heading. Defaults to "Shorten a link". */
+  title?: string;
+  /** Signed-in: the expiry chosen in Settings → Preferences. Anonymous links always start at 30 days. */
+  defaultExpiration?: ExpirationOption;
 }
 
-export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = false }: ShortenerWidgetProps) {
+export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = false, title = "Shorten a link", defaultExpiration }: ShortenerWidgetProps) {
   const expirationChoices = isSignedIn ? accountExpirationOptions : anonymousExpirationOptions;
+  const startingExpiration: ExpirationOption =
+    isSignedIn && defaultExpiration && expirationChoices.some((o) => o.value === defaultExpiration) ? defaultExpiration : DEFAULT_EXPIRATION;
   const [status, setStatus] = useState<Status>("idle");
   const [destination, setDestination] = useState("");
   const [alias, setAlias] = useState("");
-  const [expiration, setExpiration] = useState<ExpirationOption>(DEFAULT_EXPIRATION);
+  const [expiration, setExpiration] = useState<ExpirationOption>(startingExpiration);
   const [utm, setUtm] = useState<UtmParams>(emptyUtm);
   const [showOptions, setShowOptions] = useState(false);
   const [showUtm, setShowUtm] = useState(false);
@@ -199,7 +205,7 @@ export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = 
     setDestination("");
     setAlias("");
     setUtm(emptyUtm);
-    setExpiration(DEFAULT_EXPIRATION);
+    setExpiration(startingExpiration);
     setErrors({});
     setTakenAliases([]);
     requestAnimationFrame(() => destinationRef.current?.focus());
@@ -216,7 +222,7 @@ export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = 
   if (limitReached) {
     return (
       <div id="shorten" className="shortener-panel scroll-mt-24">
-        <h2 className="text-h3">Shorten a link</h2>
+        <h2 className="text-h3">{title}</h2>
         <p role="status" className="mt-3 text-(--color-muted)">
           You&apos;re at the limit of {ACTIVE_LINK_LIMIT} active links. Disable, archive or delete a link (or wait for one to expire) to make room for a new one.
         </p>
@@ -230,7 +236,7 @@ export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = 
   return (
     <div id="shorten" className="shortener-panel scroll-mt-24">
       <form onSubmit={handleSubmit} noValidate aria-busy={isCreating}>
-        <h2 className="text-h3">Shorten a link</h2>
+        <h2 className="text-h3">{title}</h2>
 
         <label htmlFor="destination-url" className="text-label mt-4 block">
           Paste your long URL

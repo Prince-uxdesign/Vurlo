@@ -1,74 +1,106 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Suspense } from "react";
+import { AccountSummary } from "@/components/app/account-summary";
+import { ClicksOverview } from "@/components/app/clicks-overview";
+import { ActivitySkeleton, ClicksOverviewSkeleton, RecentLinksSkeleton } from "@/components/app/dashboard-skeletons";
+import { FirstLinkGuide } from "@/components/app/first-link-guide";
+import { NeedsAttention } from "@/components/app/needs-attention";
 import { QuickCreate } from "@/components/app/quick-create";
 import { RecentActivity } from "@/components/app/recent-activity";
-import { UsageCard } from "@/components/app/usage-card";
-import { LinkRow } from "@/components/links/link-row";
+import { RecentLinks } from "@/components/app/recent-links";
 import { ResultsError } from "@/components/links/states";
 import { requireUser } from "@/lib/auth/session";
-import { ACTIVE_LINK_LIMIT, DEFAULT_LIST_PARAMS } from "@/lib/links/list-params";
+import { asRpcClient } from "@/lib/analytics/detail";
+import { ANALYTICS_TTL, analyticsGuard } from "@/lib/analytics/guard";
+import { getAccountClicks } from "@/lib/dashboard/queries";
+import { getSettingsProfile } from "@/lib/settings/account";
+import { ACTIVE_LINK_LIMIT } from "@/lib/links/list-params";
 import { logServerError } from "@/lib/links/log";
-import { getMyLinkStats, listMyLinks } from "@/lib/links/workspace";
+import { getMyLinkStats } from "@/lib/links/workspace";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
+const Title = () => <h1 className="text-[30px] font-bold leading-tight tracking-tight md:text-[38px]">Dashboard</h1>;
+
+/**
+ * The command center, in priority order: create a link, the account at a
+ * glance, what's happening (clicks), recent links, then what needs a look
+ * and recent activity. Only the counts block the first paint; every section
+ * below the fold streams in from its own aggregate query, so nothing loads
+ * events and a slow or failed section never holds up the rest.
+ *
+ * QuickCreate keeps the same place in the tree for new and populated
+ * accounts, so creating a first link (which refreshes into the populated
+ * layout) keeps its success panel on screen.
+ */
 export default async function DashboardPage() {
-  await requireUser("/dashboard");
+  const user = await requireUser("/dashboard");
   const supabase = await createClient();
 
-  // Three small, bounded queries in parallel: counts, 5 newest, 5 last changed.
-  let data;
+  let stats;
+  let totalClicks: number | null = null;
+  let defaultExpiration: Awaited<ReturnType<typeof getSettingsProfile>>["defaultExpiration"] | undefined;
   try {
     if (!supabase) throw new Error("not configured");
-    const [stats, recent, changed] = await Promise.all([
+    const rpcClient = asRpcClient(supabase);
+    const [s, clicks, profile] = await Promise.all([
       getMyLinkStats(supabase),
-      listMyLinks(supabase, DEFAULT_LIST_PARAMS, 5),
-      listMyLinks(supabase, { ...DEFAULT_LIST_PARAMS, filter: "all", sort: "updated" }, 5),
+      analyticsGuard.load(user.id, "account-clicks", ANALYTICS_TTL.account, () => getAccountClicks(rpcClient)),
+      getSettingsProfile(supabase, user.id),
     ]);
-    data = { stats, recent: recent.items, changed: changed.items };
+    stats = s;
+    totalClicks = clicks.data;
+    defaultExpiration = profile.defaultExpiration;
   } catch (error) {
     logServerError("dashboard_load_failed", error);
+  }
+  if (!supabase || !stats) {
     return (
       <>
-        <h1 className="text-[30px] font-bold leading-tight tracking-tight md:text-[38px]">Dashboard</h1>
+        <Title />
         <div className="mt-6"><ResultsError /></div>
       </>
     );
   }
 
-  const now = new Date();
-  const { stats, recent, changed } = data;
+  const rpc = asRpcClient(supabase);
+  const isNew = stats.total === 0;
 
   return (
     <>
-      <h1 className="text-[30px] font-bold leading-tight tracking-tight md:text-[38px]">Dashboard</h1>
+      <Title />
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] items-start gap-6 sm:mt-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-8">
+        <QuickCreate
+          key="create"
+          limitReached={stats.active >= ACTIVE_LINK_LIMIT}
+          title={isNew ? "Create your first Vurlo link" : undefined}
+          defaultExpiration={defaultExpiration}
+        />
+        {isNew ? <FirstLinkGuide key="aside" /> : <AccountSummary key="aside" stats={stats} totalClicks={totalClicks} />}
 
-      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-8">
-        <QuickCreate limitReached={stats.active >= ACTIVE_LINK_LIMIT} />
-        <UsageCard stats={stats} />
-
-        <section aria-labelledby="recent-title">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 id="recent-title" className="text-h2">Recent links</h2>
-            <Link href="/links" className="inline-flex min-h-11 items-center font-semibold underline underline-offset-2">
-              View all links
-            </Link>
-          </div>
-          {recent.length === 0 ? (
-            <div className="rounded-(--radius-lg) border border-dashed border-(--color-ink-900) bg-white p-6 text-(--color-muted)">
-              You haven&apos;t created any links yet. Paste a URL above to make your first one.
+        {isNew ? null : (
+          <>
+            <div key="overview" className="lg:col-span-2">
+              <Suspense fallback={<ClicksOverviewSkeleton />}>
+                <ClicksOverview client={rpc} userId={user.id} />
+              </Suspense>
             </div>
-          ) : (
-            <ul className="divide-y divide-(--color-border) rounded-(--radius-lg) border border-(--color-ink-900) bg-white">
-              {recent.map((link) => (
-                <LinkRow key={link.id} link={link} now={now} />
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <RecentActivity links={changed} now={now} />
+            <div key="recent" className="min-w-0">
+              <Suspense fallback={<RecentLinksSkeleton />}>
+                <RecentLinks supabase={supabase} rpc={rpc} />
+              </Suspense>
+            </div>
+            <div key="rail" className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6">
+              <Suspense fallback={null}>
+                <NeedsAttention supabase={supabase} stats={stats} />
+              </Suspense>
+              <Suspense fallback={<ActivitySkeleton />}>
+                <RecentActivity client={rpc} />
+              </Suspense>
+            </div>
+          </>
+        )}
       </div>
     </>
   );

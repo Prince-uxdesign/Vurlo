@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { GUEST_ONLY_PATHS, isProtectedPath } from "@/lib/auth/redirect";
 import { authCookieOptions } from "@/lib/supabase/cookies";
+import { SUPABASE_TIMEOUT_MS, fetchWithTimeout } from "@/lib/supabase/fetch";
 
 /**
  * Session upkeep + route guarding, on the paths that read the session.
@@ -23,6 +24,7 @@ export const config = {
     "/dashboard/:path*",
     "/links/:path*",
     "/account/:path*",
+    "/settings/:path*",
     "/login",
     "/signup",
     "/forgot-password",
@@ -66,6 +68,7 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabase = createServerClient(url, anonKey, {
     cookieOptions: authCookieOptions,
+    global: { fetch: fetchWithTimeout(SUPABASE_TIMEOUT_MS.user) },
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll(cookiesToSet) {

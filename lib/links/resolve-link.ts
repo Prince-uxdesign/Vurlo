@@ -30,9 +30,21 @@ export async function resolveLink(
   const client = deps.client === undefined ? createPublicClient() : deps.client;
   if (!client) return { kind: "unavailable" };
 
-  const { data, error } = await client.rpc("resolve_link", { p_slug: slug });
+  type Rpc = Awaited<ReturnType<typeof client.rpc<"resolve_link">>>;
+  const lookup = async (): Promise<Pick<Rpc, "data" | "error">> => {
+    try {
+      return await client.rpc("resolve_link", { p_slug: slug });
+    } catch (thrown) {
+      // supabase-js reports failures as values; this guards the hot path anyway.
+      return { data: null, error: { message: thrown instanceof Error ? thrown.message : "lookup threw", code: "", details: "", hint: "", name: "PostgrestError" } as Rpc["error"] };
+    }
+  };
+  let { data, error } = await lookup();
+  // One retry for transport failures only (timeout, dropped connection:
+  // no SQLSTATE). A database error won't fix itself in milliseconds.
+  if (error && !error.code) ({ data, error } = await lookup());
   if (error) {
-    logServerError("resolve_link_failed", error, { slug });
+    logServerError("resolve_link_failed", error, { slug, transport: !error.code });
     return { kind: "unavailable" };
   }
   const row = data?.[0];

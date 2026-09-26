@@ -15,6 +15,16 @@ const MIGRATION = readFileSync(
   "utf8",
 );
 
+/** The latest definition of public.is_reserved_slug (Phase 8A). */
+const RESERVED_MIGRATION = readFileSync(
+  new URL("../supabase/migrations/20260926110000_security_hardening.sql", import.meta.url),
+  "utf8",
+);
+const RESERVED_FN = RESERVED_MIGRATION.slice(
+  RESERVED_MIGRATION.indexOf("create or replace function public.is_reserved_slug"),
+  RESERVED_MIGRATION.indexOf("$$;", RESERVED_MIGRATION.indexOf("create or replace function public.is_reserved_slug")) + 3,
+);
+
 const USER_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const USER_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 
@@ -140,9 +150,10 @@ describe("schema and constraints (service role)", () => {
   });
 
   it("keeps SQL and TypeScript reserved-slug lists identical", async () => {
-    const sql = MIGRATION.split("array[")[1].split("]")[0];
+    const sql = RESERVED_FN.split("array[")[1].split("]")[0];
     const inSql = [...sql.matchAll(/'([^']+)'/g)].map((m) => m[1]).sort();
     assert.deepEqual(inSql, [...RESERVED_SLUGS].sort());
+    await db.exec(RESERVED_FN);
     for (const slug of RESERVED_SLUGS) {
       const { rows } = await db.query<{ r: boolean }>("select public.is_reserved_slug($1) as r", [slug.toUpperCase()]);
       assert.equal(rows[0].r, true, slug);

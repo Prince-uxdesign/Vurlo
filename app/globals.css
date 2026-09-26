@@ -372,7 +372,9 @@ video {
 
 .badge-active {
   background: rgba(21, 128, 61, 0.1);
-  color: var(--color-success-700);
+  /* success-700 alone is ~4.4:1 on this tint (under AA for 13px text);
+     darkened within the same hue it is ~6.2:1. */
+  color: color-mix(in srgb, var(--color-success-700) 80%, #000000);
 }
 
 .badge-neutral {

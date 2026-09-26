@@ -1,0 +1,4 @@
+<h2>Confirm your new Vurlo email</h2>
+<p>Someone asked to change the email on a Vurlo account from {{ .Email }} to {{ .NewEmail }}. We sent this link to both addresses: the change happens once both are confirmed.</p>
+<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next=%2Fsettings%2Faccount%3Fnotice%3Demail-confirmation">Confirm the email change</a></p>
+<p>The link works once and expires in one hour. If you didn't ask for this, don't open the link, and change your Vurlo password.</p>

@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { AUTH_MESSAGES, classifyAuthError } from "@/lib/auth/errors";
-import { checkAuthRateLimit } from "@/lib/auth/rate-limit";
+import { checkAuthBurst, checkAuthRateLimit, peekLoginFailures, recordLoginFailure } from "@/lib/auth/rate-limit";
 import { safeNextPath } from "@/lib/auth/redirect";
 import { getVerifiedUser } from "@/lib/auth/session";
-import { logServerError } from "@/lib/links/log";
+import { logSecurityEvent, logServerError } from "@/lib/links/log";
+import { waitPhrase } from "@/lib/security/wait";
 import { createClient } from "@/lib/supabase/server";
 import { validateEmail, validateNewPassword } from "@/lib/validation/auth";
 
@@ -35,6 +36,13 @@ export interface AuthFormState {
 const refreshAuthState = () => revalidatePath("/", "layout");
 
 const UNAVAILABLE: AuthFormState = { status: "error", message: AUTH_MESSAGES.unavailable };
+
+/** Throttled: say how long, never how the limit works. */
+const tooMany = (seconds: number) => `Too many attempts. Try again in ${waitPhrase(seconds)}.`;
+/** After this many wrong passwords in a row, the error also points to password reset. */
+const NUDGE_AFTER_FAILURES = 3;
+/** Longer than any real password; refused before it reaches the auth server. */
+const MAX_PASSWORD_LENGTH = 1024;
 const origin = () => new URL(siteConfig.url).origin;
 const text = (formData: FormData, key: string) => {
   const value = formData.get(key);
@@ -54,12 +62,18 @@ export async function signIn(_prev: AuthFormState, formData: FormData): Promise<
   if (fieldErrors.email || fieldErrors.password) return { status: "error", fieldErrors, email };
   if (!emailCheck.ok) return { status: "error", email };
 
-  const [byIp, byEmail] = await Promise.all([
-    checkAuthRateLimit("login"),
-    checkAuthRateLimit("login-email", emailCheck.value),
-  ]);
-  if (!byIp.allowed || !byEmail.allowed) {
-    return { status: "error", message: AUTH_MESSAGES.rate_limited, email };
+  if (password.length > MAX_PASSWORD_LENGTH) {
+    return { status: "error", message: AUTH_MESSAGES.invalid_credentials, email };
+  }
+
+  const quick = await checkAuthBurst();
+  if (!quick.allowed) return { status: "error", message: tooMany(quick.retryAfterSeconds), email };
+
+  // Per IP: every attempt counts. Per account: only failures count, so
+  // signing in normally never uses up the allowance.
+  const [byIp, failures] = await Promise.all([checkAuthRateLimit("login"), peekLoginFailures(emailCheck.value)]);
+  if (!byIp.allowed || !failures.allowed) {
+    return { status: "error", message: tooMany(Math.max(byIp.retryAfterSeconds, failures.retryAfterSeconds)), email };
   }
 
   const supabase = await createClient();
@@ -68,7 +82,15 @@ export async function signIn(_prev: AuthFormState, formData: FormData): Promise<
   const { error } = await supabase.auth.signInWithPassword({ email: emailCheck.value, password });
   if (error) {
     const kind = classifyAuthError(error);
+    logSecurityEvent("auth_failed", { flow: "sign_in", reason: kind });
     if (kind === "unknown" || kind === "unavailable") logServerError("sign_in_failed", error, { code: error.code });
+    if (kind === "invalid_credentials") {
+      const count = await recordLoginFailure(emailCheck.value);
+      const message = count >= NUDGE_AFTER_FAILURES
+        ? "Incorrect email or password. If you've forgotten your password, you can reset it."
+        : AUTH_MESSAGES.invalid_credentials;
+      return { status: "error", message, email };
+    }
     return { status: "error", message: AUTH_MESSAGES[kind], email };
   }
   refreshAuthState();
@@ -86,9 +108,10 @@ export async function signUp(_prev: AuthFormState, formData: FormData): Promise<
   if (!passwordCheck.ok) fieldErrors.password = passwordCheck.error;
   if (!emailCheck.ok || !passwordCheck.ok) return { status: "error", fieldErrors, email: rawEmail };
 
-  if (!(await checkAuthRateLimit("signup")).allowed) {
-    return { status: "error", message: AUTH_MESSAGES.rate_limited, email: rawEmail };
-  }
+  const quick = await checkAuthBurst();
+  if (!quick.allowed) return { status: "error", message: tooMany(quick.retryAfterSeconds), email: rawEmail };
+  const byIp = await checkAuthRateLimit("signup");
+  if (!byIp.allowed) return { status: "error", message: tooMany(byIp.retryAfterSeconds), email: rawEmail };
 
   const supabase = await createClient();
   if (!supabase) return { ...UNAVAILABLE, email: rawEmail };
@@ -124,9 +147,16 @@ export async function requestPasswordReset(_prev: AuthFormState, formData: FormD
   const emailCheck = validateEmail(rawEmail);
   if (!emailCheck.ok) return { status: "error", fieldErrors: { email: emailCheck.error }, email: rawEmail };
 
-  if (!(await checkAuthRateLimit("recover")).allowed) {
-    return { status: "error", message: AUTH_MESSAGES.rate_limited, email: rawEmail };
-  }
+  const quick = await checkAuthBurst();
+  if (!quick.allowed) return { status: "error", message: tooMany(quick.retryAfterSeconds), email: rawEmail };
+  const [byIp, byEmail] = await Promise.all([
+    checkAuthRateLimit("recover"),
+    checkAuthRateLimit("recover-email", emailCheck.value.toLowerCase()),
+  ]);
+  if (!byIp.allowed) return { status: "error", message: tooMany(byIp.retryAfterSeconds), email: rawEmail };
+  // Over the per-address limit: answer exactly as if an email was sent, so
+  // this can't be used to learn anything about the address. Nothing is sent.
+  if (!byEmail.allowed) return { status: "success", outcome: "reset-sent", email: emailCheck.value };
 
   const supabase = await createClient();
   if (!supabase) return { ...UNAVAILABLE, email: rawEmail };
@@ -166,7 +196,7 @@ export async function updatePassword(_prev: AuthFormState, formData: FormData): 
   // A password change (especially after a reset) should end every other session.
   await supabase.auth.signOut({ scope: "others" });
   refreshAuthState();
-  redirect("/account?notice=password-updated");
+  redirect("/settings/security?notice=password-updated");
 }
 
 export async function signInWithGoogle(formData: FormData): Promise<void> {

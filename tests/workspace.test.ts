@@ -114,7 +114,9 @@ describe("date helpers", () => {
     assert.equal(describeExpiry(null, now).text, "No expiry");
     const soon = describeExpiry("2026-09-28T12:00:00Z", now);
     assert.equal(soon.soon, true);
-    assert.match(soon.text, /^Expires .* \(in 3 days\)$/);
+    assert.equal(soon.text, "Expires in 3 days");
+    assert.match(soon.date ?? "", /^28 Sep\w* 2026$/);
+    assert.match(describeExpiry("2027-09-25T12:00:00Z", now).text, /^Expires 25 Sep\w* 2027 \(next year\)$/);
     const past = describeExpiry("2026-09-20T12:00:00Z", now);
     assert.equal(past.past, true);
     assert.match(past.text, /^Expired 5 days ago$/);

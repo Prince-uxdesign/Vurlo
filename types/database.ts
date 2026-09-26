@@ -62,9 +62,9 @@ export type Database = {
         Relationships: [];
       };
       profiles: {
-        Row: { id: string; email: string | null; created_at: string };
-        Insert: { id: string; email?: string | null; created_at?: string };
-        Update: { id?: string; email?: string | null; created_at?: string };
+        Row: { id: string; email: string | null; created_at: string; default_link_expiration: string };
+        Insert: { id: string; email?: string | null; created_at?: string; default_link_expiration?: string };
+        Update: { id?: string; email?: string | null; created_at?: string; default_link_expiration?: string };
         Relationships: [];
       };
       retired_slugs: {
@@ -180,6 +180,10 @@ export type Database = {
           retry_after_seconds: number;
         }[];
       };
+      rate_limit_peek: {
+        Args: { p_key: string; p_window_seconds: number };
+        Returns: { count: number; retry_after_seconds: number }[];
+      };
       effective_link_status: {
         Args: { p_status: string; p_expires_at: string | null };
         Returns: string;
@@ -264,6 +268,28 @@ export type Database = {
           links_clicked: number;
           total_links: number;
           last_clicked_at: string | null;
+        }[];
+      };
+      my_links_clicks: {
+        Args: { p_link_ids: string[] };
+        Returns: { link_id: string; human_clicks: number; last_clicked_at: string | null }[];
+      };
+      my_account_timeseries: {
+        Args: { p_start: string; p_end: string };
+        Returns: { bucket_start: string; total: number; human: number }[];
+      };
+      my_top_links: {
+        Args: { p_start?: string | null; p_end?: string | null; p_limit?: number };
+        Returns: { link_id: string; slug: string; human_clicks: number }[];
+      };
+      my_recent_activity: {
+        Args: { p_limit?: number };
+        Returns: {
+          kind: string;
+          link_id: string;
+          slug: string;
+          occurred_at: string;
+          clicks: number;
         }[];
       };
     };

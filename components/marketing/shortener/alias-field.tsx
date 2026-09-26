@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CircleAlert, Info, X } from "lucide-react";
+import { Check, CircleAlert, Clock, Info, X } from "lucide-react";
 import type { Ref } from "react";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils/cn";
@@ -98,6 +98,14 @@ function AliasStatus({ id, state, alias }: { id: string; state: AliasState; alia
       content = (
         <p className="field-error">
           <CircleAlert size={16} aria-hidden="true" className="mt-0.5 flex-none" />
+          <span>{state.message}</span>
+        </p>
+      );
+      break;
+    case "slow":
+      content = (
+        <p className="field-helper flex items-start gap-1.5">
+          <Clock size={16} aria-hidden="true" className="mt-0.5 flex-none" />
           <span>{state.message}</span>
         </p>
       );

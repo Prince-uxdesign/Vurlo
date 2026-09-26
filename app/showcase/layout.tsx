@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
 /**
- * Dev-only showcase — excluded from indexing and excluded from the
- * public sitemap. Remove this route before the marketing launch
- * unless a public design reference is explicitly requested.
+ * Dev-only design showcase. Not served in production (it's an unlinked,
+ * unreviewed surface there), and never indexed.
  */
 export const metadata: Metadata = {
   title: "Showcase",
@@ -16,5 +16,6 @@ export default function ShowcaseLayout({
 }: {
   children: ReactNode;
 }) {
+  if (process.env.NODE_ENV === "production") notFound();
   return children;
 }

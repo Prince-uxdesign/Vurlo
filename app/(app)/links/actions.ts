@@ -2,8 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { getVerifiedUser } from "@/lib/auth/session";
-import { logServerError } from "@/lib/links/log";
+import { MANAGE_LINK_LIMIT } from "@/lib/links/limits";
+import { logSecurityEvent, logServerError } from "@/lib/links/log";
 import { ACTIVE_LINK_LIMIT } from "@/lib/links/list-params";
+import { consumeRateLimit } from "@/lib/links/rate-limit";
+import { rateLimitKey } from "@/lib/links/request";
+import { BURST, burst } from "@/lib/security/burst";
+import { waitPhrase } from "@/lib/security/wait";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { MAX_SLUG_CHANGES, TRANSITIONS, UUID_PATTERN, isStatusAction, validateLinkEdit } from "@/lib/links/manage";
 import type { LinkEditErrors, LinkEditInput, StatusAction } from "@/lib/links/manage";
 import { createClient } from "@/lib/supabase/server";
@@ -19,7 +25,7 @@ export type ActionResult =
       ok: false;
       error: string;
       /** `auth`: the session ended (signed out elsewhere, expired): send them to sign in. */
-      code: "limit" | "not_found" | "invalid" | "unavailable" | "auth";
+      code: "limit" | "not_found" | "invalid" | "unavailable" | "auth" | "rate_limited";
       fieldErrors?: LinkEditErrors;
     };
 
@@ -35,8 +41,39 @@ const DONE: Record<StatusAction, string> = {
   delete: "Link deleted.",
 };
 
+const slowDown = (seconds: number): ActionResult => ({
+  ok: false,
+  error: `You're making changes very quickly. Please wait ${waitPhrase(seconds)} and try again.`,
+  code: "rate_limited",
+});
+
+/**
+ * Per-account throttle on link changes: an in-memory burst guard, then the
+ * durable window (MANAGE_LINK_LIMIT). Returns seconds to wait, or 0. The
+ * durable check fails open: these are the owner's own rows, RLS still
+ * guards every write, and a limiter outage shouldn't lock people out.
+ */
+async function manageWait(userId: string): Promise<number> {
+  const quick = burst.hit(`manage:${userId}`, BURST.manage);
+  if (!quick.allowed) {
+    logSecurityEvent("rate_limited", { scope: "manage-burst", signedIn: true });
+    return quick.retryAfterSeconds;
+  }
+  const client = createAdminClient();
+  if (!client) return 0;
+  try {
+    const result = await consumeRateLimit(client, await rateLimitKey("manage", userId), MANAGE_LINK_LIMIT);
+    if (!result.allowed) logSecurityEvent("rate_limited", { scope: "manage", signedIn: true });
+    return result.allowed ? 0 : result.retryAfterSeconds;
+  } catch (error) {
+    logServerError("manage_rate_limit_failed", error);
+    return 0;
+  }
+}
+
 function refresh() {
   revalidatePath("/links");
+  revalidatePath("/links/[id]", "page");
   revalidatePath("/dashboard");
 }
 
@@ -46,12 +83,20 @@ const isSlugTaken = (e: DbError) => e?.code === "23505" && Boolean(e.message?.in
 const isSlugChangeLimit = (e: DbError) => Boolean(e?.message?.includes("slug_change_limit_reached"));
 const isDeleted = (e: DbError) => Boolean(e?.message?.includes("link_deleted"));
 
-export async function setLinkStatusAction(id: string, action: StatusAction): Promise<ActionResult> {
+/**
+ * `options.leaving`: the caller navigates away on success (deleting from the
+ * link's own page). Skipping revalidation there stops the page being
+ * re-rendered as "not found" underneath the user before they leave; every
+ * app page is dynamic, so wherever they land is fetched fresh anyway.
+ */
+export async function setLinkStatusAction(id: string, action: StatusAction, options?: { leaving?: boolean }): Promise<ActionResult> {
   if (typeof id !== "string" || !UUID_PATTERN.test(id) || !isStatusAction(action)) {
     return { ok: false, error: "That request wasn't valid.", code: "invalid" };
   }
   const user = await getVerifiedUser();
   if (!user) return SIGNED_OUT;
+  const wait = await manageWait(user.id);
+  if (wait > 0) return slowDown(wait);
   const supabase = await createClient();
   if (!supabase) return { ok: false, error: GENERIC, code: "unavailable" };
 
@@ -77,7 +122,7 @@ export async function setLinkStatusAction(id: string, action: StatusAction): Pro
     refresh();
     return { ok: false, error: "This link has changed or no longer exists. The list has been refreshed.", code: "not_found" };
   }
-  refresh();
+  if (options?.leaving !== true) refresh();
   return { ok: true, message: DONE[action] };
 }
 
@@ -100,6 +145,8 @@ export async function updateLinkAction(id: string, input: LinkEditInput): Promis
 
   const user = await getVerifiedUser();
   if (!user) return SIGNED_OUT;
+  const wait = await manageWait(user.id);
+  if (wait > 0) return slowDown(wait);
   const supabase = await createClient();
   if (!supabase) return { ok: false, error: GENERIC, code: "unavailable" };
 

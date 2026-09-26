@@ -188,10 +188,10 @@ describe("utm conflicts and normalization hints", () => {
 
 describe("isSafeRedirectUrl", () => {
   it("accepts only absolute credential-free http(s) URLs", () => {
-    for (const ok of ["https://example.com", "http://example.com/a?b=1#c", "http://127.0.0.1:4000/x"]) {
+    for (const ok of ["https://example.com", "http://example.com/a?b=1#c", "http://8.8.8.8:4000/x"]) {
       assert.equal(isSafeRedirectUrl(ok), true, ok);
     }
-    for (const bad of ["javascript:alert(1)", "data:text/html,x", "ftp://a.com", "//evil.com", "/path", "example.com", "https://u:p@a.com", "https://", "", "HTTPS:evil"]) {
+    for (const bad of ["javascript:alert(1)", "data:text/html,x", "ftp://a.com", "//evil.com", "/path", "example.com", "https://u:p@a.com", "https://", "", "HTTPS:evil", "http://127.0.0.1:4000/x"]) {
       assert.equal(isSafeRedirectUrl(bad), false, bad);
     }
   });

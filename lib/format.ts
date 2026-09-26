@@ -28,14 +28,25 @@ export function formatRelative(iso: string, now: Date): string {
   return relative.format(Math.round(seconds / 60), "minute");
 }
 
-/** Human expiry line: "No expiry", "Expires 25 Oct 2026 (in 29 days)", "Expired 3 days ago". */
-export function describeExpiry(expiresAt: string | null, now: Date): { text: string; soon: boolean; past: boolean } {
-  if (!expiresAt) return { text: "No expiry", soon: false, past: false };
+/**
+ * Human expiry line. Within a week it leads with the countdown ("Expires in
+ * 3 days", "Expires tomorrow"), which is what matters then; further out the
+ * date leads: "Expires 25 Oct 2026 (in 29 days)". Past: "Expired 3 days ago".
+ * `date` is always the absolute date, for a secondary line or a title.
+ */
+export function describeExpiry(
+  expiresAt: string | null,
+  now: Date,
+): { text: string; soon: boolean; past: boolean; date: string | null } {
+  if (!expiresAt) return { text: "No expiry", soon: false, past: false, date: null };
+  const date = formatDate(expiresAt);
   const ms = new Date(expiresAt).getTime() - now.getTime();
-  if (ms <= 0) return { text: `Expired ${formatRelative(expiresAt, now)}`, soon: false, past: true };
+  if (ms <= 0) return { text: `Expired ${formatRelative(expiresAt, now)}`, soon: false, past: true, date };
+  const soon = ms <= 7 * 86400_000;
   return {
-    text: `Expires ${formatDate(expiresAt)} (${formatRelative(expiresAt, now)})`,
-    soon: ms <= 7 * 86400_000,
+    text: soon ? `Expires ${formatRelative(expiresAt, now)}` : `Expires ${date} (${formatRelative(expiresAt, now)})`,
+    soon,
     past: false,
+    date,
   };
 }

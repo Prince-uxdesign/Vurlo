@@ -1,5 +1,5 @@
 import "server-only";
-import { getRateLimitSalt } from "@/lib/utils/env";
+import { serverSalt } from "@/lib/utils/secrets";
 import { MAX_REQUEST_BODY_BYTES } from "./limits";
 
 /**
@@ -14,7 +14,7 @@ export function getClientIp(headers: Headers): string {
 
 /** Salted SHA-256 so raw IPs are never stored. */
 export async function rateLimitKey(scope: string, ip: string): Promise<string> {
-  const data = new TextEncoder().encode(`${getRateLimitSalt()}:${ip}`);
+  const data = new TextEncoder().encode(`${serverSalt("RATE_LIMIT_SALT")}:${ip}`);
   const digest = await crypto.subtle.digest("SHA-256", data);
   const hex = [...new Uint8Array(digest)]
     .map((byte) => byte.toString(16).padStart(2, "0"))

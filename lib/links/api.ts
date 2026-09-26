@@ -1,5 +1,8 @@
 import "server-only";
 import { siteConfig } from "@/config/site";
+import { BURST, burst as sharedBurst } from "@/lib/security/burst";
+import type { createBurstLimiter } from "@/lib/security/burst";
+import { waitPhrase } from "@/lib/security/wait";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { AdminClient } from "@/lib/supabase/admin";
 import { applyUtm, validateAlias } from "@/lib/validation/link-input";
@@ -8,8 +11,8 @@ import type {
   CreateLinkApiResponse,
 } from "./api-types";
 import { createLink } from "./create-link";
-import { logServerError } from "./log";
-import { ALIAS_CHECK_LIMIT, CREATE_LINK_LIMIT } from "./limits";
+import { logSecurityEvent, logServerError } from "./log";
+import { ALIAS_CHECK_LIMIT, CREATE_LINK_LIMIT, CREATE_LINK_USER_LIMIT } from "./limits";
 import { consumeRateLimit } from "./rate-limit";
 import type { RateLimitResult } from "./rate-limit";
 import { getClientIp, isSameOrigin, rateLimitKey, readJsonBody } from "./request";
@@ -24,6 +27,8 @@ export interface ApiDeps {
   /** Verified id of the signed-in user, if any. Resolved by the route, never read from the body. */
   userId?: string | null;
   now?: Date;
+  /** In-memory burst layer. Injected in tests; defaults to the process-wide one. */
+  burst?: ReturnType<typeof createBurstLimiter>;
 }
 
 const STATUS_BY_CODE: Record<LinkCreationErrorCode, number> = {
@@ -54,16 +59,22 @@ function createError(
   return json(body, status, headers);
 }
 
-/** Returns a Response when the caller should stop, otherwise null. */
+/**
+ * Counts one request against a limit. `subject` defaults to the client IP;
+ * signed-in callers pass their user id. Keys are salted hashes either way.
+ */
 async function limitOrNull(
   client: AdminClient,
   scope: string,
   request: Request,
   config: { limit: number; windowSeconds: number },
+  subject?: string,
 ): Promise<{ result: RateLimitResult } | { failed: true }> {
   try {
-    const key = await rateLimitKey(scope, getClientIp(request.headers));
-    return { result: await consumeRateLimit(client, key, config) };
+    const key = await rateLimitKey(scope, subject ?? getClientIp(request.headers));
+    const result = await consumeRateLimit(client, key, config);
+    if (!result.allowed) logSecurityEvent("rate_limited", { scope, signedIn: Boolean(subject) });
+    return { result };
   } catch (error) {
     logServerError("rate_limit_failed", error, { scope });
     return { failed: true };
@@ -75,6 +86,7 @@ export async function handleCreateLinkRequest(
   deps: ApiDeps = {},
 ): Promise<Response> {
   if (!isSameOrigin(request)) {
+    logSecurityEvent("cross_origin_refused", { route: "create" });
     return createError(403, {
       ok: false,
       code: "bad_request",
@@ -95,7 +107,28 @@ export async function handleCreateLinkRequest(
 
   // Rate limit before doing any other work. Fails closed: if the limiter
   // itself is down we refuse rather than allow unmetered anonymous writes.
-  const limited = await limitOrNull(client, "create", request, CREATE_LINK_LIMIT);
+  // Layer 1: refuse machine-speed bursts in memory, before any database work.
+  const who = deps.userId ? `user:${deps.userId}` : `ip:${getClientIp(request.headers)}`;
+  const quick = (deps.burst ?? sharedBurst).hit(`create:${who}`, deps.userId ? BURST.createSignedIn : BURST.createAnonymous);
+  if (!quick.allowed) {
+    logSecurityEvent("rate_limited", { scope: "create-burst", signedIn: Boolean(deps.userId) });
+    return createError(
+      429,
+      {
+        ok: false,
+        code: "rate_limited",
+        field: "form",
+        error: `You're creating links too quickly. Please wait ${waitPhrase(quick.retryAfterSeconds)} and try again.`,
+        retryAfterSeconds: quick.retryAfterSeconds,
+      },
+      { "Retry-After": String(quick.retryAfterSeconds) },
+    );
+  }
+
+  // Layer 2: the durable hourly cap, shared by every server instance.
+  const limited = deps.userId
+    ? await limitOrNull(client, "create-user", request, CREATE_LINK_USER_LIMIT, deps.userId)
+    : await limitOrNull(client, "create", request, CREATE_LINK_LIMIT);
   if ("failed" in limited) {
     return createError(503, {
       ok: false,
@@ -106,14 +139,13 @@ export async function handleCreateLinkRequest(
   }
   if (!limited.result.allowed) {
     const retryAfterSeconds = limited.result.retryAfterSeconds;
-    const minutes = Math.max(1, Math.ceil(retryAfterSeconds / 60));
     return createError(
       429,
       {
         ok: false,
         code: "rate_limited",
         field: "form",
-        error: `You've created a lot of links. Try again in ${minutes} ${minutes === 1 ? "minute" : "minutes"}.`,
+        error: `You've made a lot of links in the last hour. You can create more in ${waitPhrase(retryAfterSeconds)}.`,
         retryAfterSeconds,
       },
       { "Retry-After": String(retryAfterSeconds) },
@@ -144,6 +176,11 @@ export async function handleCreateLinkRequest(
   }
 
   const { link } = result;
+  logSecurityEvent("link_created", {
+    signedIn: Boolean(deps.userId),
+    customAlias: link.isCustomAlias,
+    destinationHost: new URL(link.destinationUrl).hostname,
+  });
   const displayUrl = `${siteConfig.shortLinkHost}/${link.slug}`;
   return json(
     {
@@ -178,10 +215,13 @@ export async function handleAliasCheckRequest(
     json(body, status, headers);
 
   if (!isSameOrigin(request)) {
+    logSecurityEvent("cross_origin_refused", { route: "alias" });
     return respond({ status: "error", error: "This request wasn't allowed." }, 403);
   }
 
-  const alias = validateAlias(new URL(request.url).searchParams.get("alias") ?? "");
+  const rawAlias = new URL(request.url).searchParams.get("alias") ?? "";
+  // Anything longer than a slug can be is invalid without further work.
+  const alias = validateAlias(rawAlias.length > 64 ? "!" : rawAlias);
   if (!alias.ok) {
     return respond(
       { status: alias.code === "reserved_alias" ? "reserved" : "invalid", error: alias.error },
@@ -197,17 +237,23 @@ export async function handleAliasCheckRequest(
     return respond({ status: "error", error: "Availability can't be checked right now." }, 503);
   }
 
+  const slowDown = (retryAfterSeconds: number) =>
+    respond(
+      { status: "rate_limited", error: `You're checking aliases quickly. Wait ${waitPhrase(retryAfterSeconds)}, or just create the link: we'll confirm the alias then.` },
+      429,
+      { "Retry-After": String(retryAfterSeconds) },
+    );
+  const quick = (deps.burst ?? sharedBurst).hit(`alias:${getClientIp(request.headers)}`, BURST.aliasCheck);
+  if (!quick.allowed) {
+    logSecurityEvent("rate_limited", { scope: "alias-burst" });
+    return slowDown(quick.retryAfterSeconds);
+  }
+
   const limited = await limitOrNull(client, "alias", request, ALIAS_CHECK_LIMIT);
   if ("failed" in limited) {
     return respond({ status: "error", error: "Availability can't be checked right now." }, 503);
   }
-  if (!limited.result.allowed) {
-    return respond(
-      { status: "rate_limited", error: "Too many checks. Slow down for a moment." },
-      429,
-      { "Retry-After": String(limited.result.retryAfterSeconds) },
-    );
-  }
+  if (!limited.result.allowed) return slowDown(limited.result.retryAfterSeconds);
 
   // Live, deleted and retired (a link's former address) slugs all count as taken.
   const { data, error } = await client.rpc("is_slug_taken", { p_slug: alias.value });

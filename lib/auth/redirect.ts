@@ -24,7 +24,7 @@ export function safeNextPath(raw: unknown, fallback = "/dashboard"): string {
 }
 
 /** Paths that require a signed-in user. Checked in proxy AND in each page/action. */
-export const PROTECTED_PATHS = ["/dashboard", "/links", "/account"] as const;
+export const PROTECTED_PATHS = ["/dashboard", "/links", "/account", "/settings"] as const;
 /** Pages a signed-in user has no reason to see. */
 export const GUEST_ONLY_PATHS = ["/login", "/signup", "/forgot-password"] as const;
 

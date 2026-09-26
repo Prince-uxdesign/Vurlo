@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/types/database";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/utils/env";
 import { authCookieOptions } from "./cookies";
+import { SUPABASE_TIMEOUT_MS, fetchWithTimeout } from "./fetch";
 
 /**
  * Server-side Supabase client for Server Components / Route Handlers.
@@ -22,6 +23,7 @@ export async function createClient() {
 
   return createServerClient<Database>(url, anonKey, {
     cookieOptions: authCookieOptions,
+    global: { fetch: fetchWithTimeout(SUPABASE_TIMEOUT_MS.user) },
     cookies: {
       getAll() {
         return cookieStore.getAll();

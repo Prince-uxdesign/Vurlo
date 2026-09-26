@@ -6,7 +6,8 @@ import type { PGlite } from "@electric-sql/pglite";
 import { AnalyticsSummary } from "@/components/analytics/analytics-summary";
 import { BreakdownList } from "@/components/analytics/breakdown-list";
 import { LinkAnalytics } from "@/components/analytics/link-analytics";
-import { TrendChart } from "@/components/analytics/trend-chart";
+import { PresetSwitcher } from "@/components/analytics/preset-switcher";
+import { TrendChart, niceTop } from "@/components/analytics/trend-chart";
 import {
   type BreakdownDimension,
   type BreakdownRow,
@@ -154,7 +155,7 @@ describe("hero metrics render database truth (no demo data)", () => {
     assert.equal(metrics.approxUniques, 6);
     const html = renderToStaticMarkup(<AnalyticsSummary metrics={metrics} />);
     assert.ok(html.includes(">6<"), "hero shows 6 human clicks, not 9 requests");
-    assert.ok(html.includes("Approx. 6 unique visitors"));
+    assert.ok(html.includes("Unique visitors") && html.includes("(approx.)"), "uniques labelled approximate");
     assert.ok(html.includes("9 total requests"), "filtering methodology stated");
     assert.ok(!html.includes("Sample") && !html.includes("Demo") && !html.includes("Lorem"));
   });
@@ -162,38 +163,53 @@ describe("hero metrics render database truth (no demo data)", () => {
   it("zero state names the outcome instead of charting nothing", async () => {
     const { metrics } = await loadDetail(linkEmpty);
     assert.deepEqual(metrics, emptyLinkMetrics());
-    const detail = {
-      link: { id: linkEmpty } as never, preset: "30d" as const,
-      metrics, timeseries: [], breakdowns: {} as never,
-    };
-    const html = renderToStaticMarkup(
-      <LinkAnalytics detail={detail} shortUrl="https://v.test/d-empty" />,
-    );
+    const data = { preset: "all" as const, metrics, timeseries: [], breakdowns: {} as never };
+    const html = renderToStaticMarkup(<LinkAnalytics data={data} shortUrl="https://v.test/d-empty" />);
     assert.ok(html.includes("No clicks yet"));
     assert.ok(html.includes("https://v.test/d-empty"));
     assert.ok(!html.includes("Clicks over time"), "no empty chart pretending at data");
+    // A bounded range says the quiet spell is this range, not the link's life.
+    const ranged = renderToStaticMarkup(<LinkAnalytics data={{ ...data, preset: "7d" }} shortUrl="https://v.test/d-empty" />);
+    assert.ok(ranged.includes("No clicks in the last 7 days"));
   });
 });
 
 describe("trend chart (readable, touchable, accessible)", () => {
-  it("names the peak in words and ships the full series as a table", async () => {
+  it("names the peak in words and exposes every period to assistive tech", async () => {
     const { timeseries } = await loadDetail(linkMain);
     const html = renderToStaticMarkup(<TrendChart points={timeseries} bucket="day" />);
     assert.ok(html.includes("Clicks over time"));
-    assert.ok(html.includes("Busiest period:"), "touch users get values as text");
-    assert.ok(html.includes('role="img"'), "chart has a text alternative");
-    assert.ok(html.includes("<table"), "complete series as a semantic table");
-    assert.ok(html.includes("<caption>"), "table labelled");
-    // Bars carry per-period titles (mouse) AND sr-only values (touch/reader).
-    assert.ok(html.includes("title=") && html.includes("sr-only"));
+    assert.ok(html.includes("Busiest period:"), "values readable without hover");
+    assert.ok(html.includes('role="listbox"') && html.includes('tabindex="0"'), "one keyboard stop, arrow keys inside");
+    const options = html.match(/role="option"/g) ?? [];
+    assert.equal(options.length, timeseries.length, "every period is a named option");
+    assert.ok(/aria-label="\d+ \w+: \d+ clicks?"/.test(html), "options name date and value");
+    assert.ok(html.includes("Use the arrow keys"), "keyboard use explained");
+    assert.ok(html.includes("touch-pan-y"), "horizontal drag reads values; vertical still scrolls the page");
   });
 
-  it("keeps ticks sparse so 320px phones stay readable", async () => {
+  it("thins date labels by width: 3 on phones, 5 on tablets, 7 on desktop", async () => {
     const { timeseries } = await loadDetail(linkMain);
+    assert.ok(timeseries.length >= 30);
     const html = renderToStaticMarkup(<TrendChart points={timeseries} bucket="day" />);
-    const labelledTicks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-      .filter((m) => html.includes(` ${m}<`));
-    assert.ok(labelledTicks.length <= 5, `ticks=${labelledTicks.length}`);
+    const ticks = [...html.matchAll(/<span class="absolute top-0 whitespace-nowrap([^"]*)"/g)].map((m) => m[1]!.split(/\s+/));
+    const visible = (bp: "" | "sm:" | "lg:") => ticks.filter((c) => {
+      // The last class that applies at this breakpoint wins (mobile-first).
+      const order = bp === "" ? [""] : bp === "sm:" ? ["", "sm:"] : ["", "sm:", "lg:"];
+      let shown = false;
+      for (const prefix of order) {
+        if (c.includes(`${prefix}block`)) shown = true;
+        if (c.includes(`${prefix}hidden`)) shown = false;
+      }
+      return shown;
+    }).length;
+    assert.equal(visible(""), 3, "phones");
+    assert.equal(visible("sm:"), 5, "tablets");
+    assert.equal(visible("lg:"), 7, "desktop");
+  });
+
+  it("puts round values on the y axis", () => {
+    assert.deepEqual([1, 3, 5, 9, 10, 12, 23, 300].map(niceTop), [1, 4, 6, 10, 10, 20, 40, 400]);
   });
 });
 
@@ -218,20 +234,23 @@ describe("breakdowns render honest, readable rows", () => {
 });
 
 describe("layout, responsiveness and freshness markers", () => {
-  it("stacks on phones, columns on tablet/desktop, never scrolls sideways", async () => {
+  it("columns follow the width the analytics get, never scrolls sideways", async () => {
     const { metrics, timeseries, breakdowns } = await loadDetail(linkMain);
-    const detail = {
-      link: { id: linkMain } as never, preset: "30d" as const,
-      metrics, timeseries, breakdowns,
-    };
     const html = renderToStaticMarkup(
-      <LinkAnalytics detail={detail} shortUrl="https://v.test/d-main" />,
+      <LinkAnalytics data={{ preset: "30d", metrics, timeseries, breakdowns }} shortUrl="https://v.test/d-main" />,
     );
-    assert.ok(html.includes("grid-cols-1"), "phones stack");
-    assert.ok(html.includes("md:grid-cols-2"), "tablets get two columns");
-    assert.ok(html.includes("xl:grid-cols-3"), "desktop gets three");
+    assert.ok(html.includes("@container"), "sized by its column, not the screen");
+    assert.ok(html.includes("grid-cols-1"), "narrow: one column");
+    assert.ok(html.includes("@xl:grid-cols-2"), "wider: two");
+    assert.ok(html.includes("@5xl:grid-cols-3"), "full width: three");
     assert.ok(!html.includes("overflow-x-auto"), "no horizontal scrolling");
+  });
+
+  it("range switcher: one row of links, current one announced, keeps scroll", () => {
+    const html = renderToStaticMarkup(<PresetSwitcher linkId={linkMain} preset="7d" />);
     assert.ok(html.includes('aria-current="page"'), "active range announced");
+    assert.ok(html.includes("grid-cols-4"), "four equal cells, no wrapping on phones");
+    assert.equal((html.match(/min-h-11/g) ?? []).length, 4, "44px targets");
   });
 
   it("communicates freshness without claiming live data", async () => {

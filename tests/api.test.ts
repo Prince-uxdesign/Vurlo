@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 import type { PGlite } from "@electric-sql/pglite";
 import { handleAliasCheckRequest, handleCreateLinkRequest } from "@/lib/links/api";
+import { createBurstLimiter } from "@/lib/security/burst";
 import { resolveLink } from "@/lib/links/resolve-link";
 import type { AdminClient } from "@/lib/supabase/admin";
 import { createTestDb, pgliteClient } from "./helpers/pglite-client";
@@ -44,8 +45,20 @@ interface CreateJson {
   };
 }
 
+/**
+ * Requests in these tests arrive back to back, which the in-memory burst
+ * layer would (rightly) stop. This clock spaces them 11s apart, so the tests
+ * below exercise the durable hourly limits, as sustained traffic would.
+ * The burst layer has its own tests at the end.
+ */
+const spaced = () => {
+  let t = 0;
+  return createBurstLimiter(() => (t += 11_000));
+};
+const slow = spaced();
+
 async function create(body: unknown, init?: Parameters<typeof post>[1]) {
-  const response = await handleCreateLinkRequest(post(body, init), { client });
+  const response = await handleCreateLinkRequest(post(body, init), { client, burst: slow });
   return { response, json: (await response.json()) as CreateJson };
 }
 
@@ -254,7 +267,7 @@ describe("rate limiting", () => {
     assert.equal(json.code, "rate_limited");
     const retry = Number(response.headers.get("retry-after"));
     assert.ok(retry > 0 && retry <= 3600, String(retry));
-    assert.match(json.error, /minute/);
+    assert.match(json.error, /last hour.*\d+ minutes?/);
     // Another client is unaffected.
     assert.equal((await create({ destination: "https://example.com" })).response.status, 201);
   });
@@ -271,9 +284,9 @@ describe("rate limiting", () => {
   it("limits alias checks separately from creation", async () => {
     const ip = newIp();
     for (let i = 0; i < 60; i++) {
-      assert.equal((await handleAliasCheckRequest(aliasGet("free-name", ip), { client })).status, 200);
+      assert.equal((await handleAliasCheckRequest(aliasGet("free-name", ip), { client, burst: slow })).status, 200);
     }
-    const blocked = await handleAliasCheckRequest(aliasGet("free-name", ip), { client });
+    const blocked = await handleAliasCheckRequest(aliasGet("free-name", ip), { client, burst: slow });
     assert.equal(blocked.status, 429);
     assert.equal(((await blocked.json()) as { status: string }).status, "rate_limited");
     // Creation for the same IP still works.
@@ -394,5 +407,61 @@ describe("migration: anonymous expiry and rate-limit table", () => {
     assert.deepEqual(rows.map((r) => r.allowed), [true, true, true, false]);
     assert.deepEqual(rows.map((r) => r.remaining), [2, 1, 0, 0]);
     assert.ok(rows[3]!.retry_after_seconds >= 1 && rows[3]!.retry_after_seconds <= 60);
+  });
+});
+
+const USER_FOR_BURST = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+
+describe("burst protection (in-memory, before the database)", () => {
+  it("refuses machine-speed creation without writing rate-limit rows", async () => {
+    const limiter = createBurstLimiter();
+    const ip = newIp();
+    const before = Number((await db.query<{ n: number }>("select count(*)::int as n from public.rate_limits")).rows[0]!.n);
+    const statuses: number[] = [];
+    let last: { error?: string; retryAfterSeconds?: number } = {};
+    for (let i = 0; i < 8; i++) {
+      const r = await handleCreateLinkRequest(post({ destination: "https://example.com/burst" }, { ip }), { client, burst: limiter });
+      statuses.push(r.status);
+      last = (await r.json()) as typeof last;
+    }
+    assert.deepEqual(statuses, [201, 201, 201, 201, 201, 429, 429, 429]);
+    assert.match(last.error ?? "", /creating links too quickly.*wait \d+ seconds/i);
+    assert.ok((last.retryAfterSeconds ?? 0) >= 1 && (last.retryAfterSeconds ?? 0) <= 10);
+    const after = Number((await db.query<{ n: number }>("select count(*)::int as n from public.rate_limits")).rows[0]!.n);
+    // The 5 allowed requests touched the durable limiter (one row per window
+    // per key); the 3 refused ones never reached the database.
+    assert.ok(after - before <= 1, `rate_limits grew by ${after - before}`);
+  });
+
+  it("signed-in users get their own bucket, not their office IP's", async () => {
+    await db.exec(`insert into auth.users (id) values ('${USER_FOR_BURST}')`);
+    const limiter = createBurstLimiter();
+    const ip = newIp();
+    for (let i = 0; i < 5; i++) await handleCreateLinkRequest(post({ destination: "https://example.com" }, { ip }), { client, burst: limiter });
+    const r = await handleCreateLinkRequest(post({ destination: "https://example.com" }, { ip }), { client, burst: limiter, userId: USER_FOR_BURST });
+    assert.notEqual(r.status, 429, "a colleague's burst doesn't block you");
+  });
+
+  it("slows rapid alias probing with an actionable message", async () => {
+    const limiter = createBurstLimiter();
+    const ip = newIp();
+    let last: Response | null = null;
+    for (let i = 0; i < 12; i++) last = await handleAliasCheckRequest(aliasGet(`probe-${i}`, ip), { client, burst: limiter });
+    assert.equal(last!.status, 429);
+    const body = (await last!.json()) as { status: string; error: string };
+    assert.equal(body.status, "rate_limited");
+    assert.match(body.error, /checking aliases quickly/);
+    assert.doesNotMatch(body.error, /429|rate.?limit|bucket|window/i, "no implementation details");
+  });
+
+  it("refuses absurd alias parameters without work", async () => {
+    const r = await handleAliasCheckRequest(aliasGet("a".repeat(5000)), { client, burst: createBurstLimiter() });
+    assert.equal(r.status, 400);
+  });
+
+  it("stays bounded in memory under a flood of distinct keys", () => {
+    const limiter = createBurstLimiter();
+    for (let i = 0; i < 12_000; i++) limiter.hit(`k${i}`, { limit: 1, windowMs: 60_000 });
+    assert.ok(limiter.size() <= 10_000);
   });
 });

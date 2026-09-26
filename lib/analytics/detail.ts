@@ -16,7 +16,7 @@ import { type RpcClient, getLinkBreakdown, getLinkMetrics, getLinkTimeseries } f
 type UserClient = NonNullable<Awaited<ReturnType<typeof createClient>>>;
 
 /** Adapts the typed Supabase client to the string-keyed RPC surface in queries.ts. */
-function asRpcClient(client: UserClient): RpcClient {
+export function asRpcClient(client: UserClient): RpcClient {
   return {
     rpc: (fn, args) =>
       client.rpc(
@@ -26,27 +26,25 @@ function asRpcClient(client: UserClient): RpcClient {
   };
 }
 
-export interface LinkAnalyticsDetail {
-  link: LinkListItem;
+export interface LinkAnalyticsData {
   preset: AnalyticsPreset;
   metrics: LinkMetrics;
   timeseries: TimeseriesPoint[];
   breakdowns: Record<BreakdownDimension, BreakdownRow[]>;
 }
 
+export interface LinkAnalyticsDetail extends LinkAnalyticsData {
+  link: LinkListItem;
+}
+
 /**
- * One owned link plus its full analytics for a preset window. Returns null
- * when the link isn't the caller's (unknown id, another user's id, deleted)
- * or when the database is unavailable -- the page turns that into notFound().
- * Everything loads server-side as aggregates; raw events never reach the
- * browser (§14: no event loading, no client-side math).
+ * One owned, non-deleted link. Null when it isn't the caller's (unknown id,
+ * another user's id, deleted) or the database is unavailable -- the page
+ * turns that into notFound(). RLS already limits the read to owned rows, so
+ * "not yours" and "doesn't exist" stay indistinguishable.
  */
-export async function getLinkAnalyticsDetail(
-  client: UserClient,
-  linkId: string,
-  presetInput: unknown,
-): Promise<LinkAnalyticsDetail | null> {
-  const preset = parsePreset(presetInput);
+export async function getOwnedLink(client: UserClient, linkId: string): Promise<LinkListItem | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(linkId)) return null;
   const { data: row, error } = await client
     .from("links")
     .select(
@@ -58,10 +56,10 @@ export async function getLinkAnalyticsDetail(
 
   if (error || !row) {
     if (error) logServerError("link_detail_failed", error, { code: error.code });
-    return null; // RLS already limits this to owned rows; null stays indistinguishable
+    return null;
   }
 
-  const link: LinkListItem = {
+  return {
     id: row.id,
     slug: row.slug,
     destinationUrl: row.destination_url,
@@ -75,15 +73,26 @@ export async function getLinkAnalyticsDetail(
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
 
+/**
+ * Analytics for a link already known to be the caller's, for one preset
+ * window. Everything loads server-side as aggregates; raw events never reach
+ * the browser. Null = ownership revoked mid-request or the database failed.
+ */
+export async function getLinkAnalytics(
+  client: UserClient,
+  linkId: string,
+  presetInput: unknown,
+): Promise<LinkAnalyticsData | null> {
+  const preset = parsePreset(presetInput);
   const rpc = asRpcClient(client);
   const [metrics, timeseries, ...breakdowns] = await Promise.all([
-    getLinkMetrics(link.id, preset, { client: rpc }),
-    getLinkTimeseries(link.id, preset, { client: rpc }),
-    ...BREAKDOWN_DIMENSIONS.map((d) => getLinkBreakdown(link.id, d, preset, { client: rpc })),
+    getLinkMetrics(linkId, preset, { client: rpc }),
+    getLinkTimeseries(linkId, preset, { client: rpc }),
+    ...BREAKDOWN_DIMENSIONS.map((d) => getLinkBreakdown(linkId, d, preset, { client: rpc })),
   ]);
 
-  // Metrics/timeseries null = ownership revoked mid-request or DB failure.
   // Breakdowns legitimately return [] when empty (see queries.ts).
   if (!metrics || !timeseries) {
     logServerError("link_analytics_failed", "aggregates unavailable", { preset });
@@ -91,7 +100,6 @@ export async function getLinkAnalyticsDetail(
   }
 
   return {
-    link,
     preset,
     metrics,
     timeseries,
@@ -99,6 +107,18 @@ export async function getLinkAnalyticsDetail(
       BREAKDOWN_DIMENSIONS.map((d, i) => [d, breakdowns[i] ?? []]),
     ) as Record<BreakdownDimension, BreakdownRow[]>,
   };
+}
+
+/** Link + analytics in one call. */
+export async function getLinkAnalyticsDetail(
+  client: UserClient,
+  linkId: string,
+  presetInput: unknown,
+): Promise<LinkAnalyticsDetail | null> {
+  const link = await getOwnedLink(client, linkId);
+  if (!link) return null;
+  const data = await getLinkAnalytics(client, link.id, presetInput);
+  return data ? { link, ...data } : null;
 }
 
 /** Mirrors public.effective_link_status(): expired derives from the DB clock. */

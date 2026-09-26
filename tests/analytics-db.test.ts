@@ -32,7 +32,7 @@ async function code(fn: () => Promise<unknown>): Promise<string> {
 }
 
 const record = (slug: string, overrides: Record<string, unknown> = {}) =>
-  as("anon", null, () =>
+  as("service_role", null, () =>
     db.query<{ record_link_event: string | null }>(
       `select public.record_link_event($1, $2, $3, $4, $5, $6, $7, $8, $9) as record_link_event`,
       [
