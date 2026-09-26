@@ -64,7 +64,9 @@ function Toolbar({
   const lastSent = useRef(params.q);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  // Debounced search → URL. Not on every keystroke.
+  // Debounced search → URL. Fires only when the input value changes, debounced.
+  // params and navigate are omitted from deps intentionally so external parameter
+  // updates (e.g. filter/sort) do not inadvertently reset or trigger this search timer.
   useEffect(() => {
     if (value.trim() === params.q) return;
     const t = setTimeout(() => {
