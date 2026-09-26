@@ -1,13 +1,14 @@
 const url = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-/** Short links live on the app's own origin for the MVP (no custom domains). */
-function hostOf(value: string): string {
+function parse(value: string): URL {
   try {
-    return new URL(value).host;
+    return new URL(value);
   } catch {
-    return "localhost:3000";
+    return new URL("http://localhost:3000");
   }
 }
+
+const appUrl = parse(url);
 
 export const siteConfig = {
   name: "Vurlo",
@@ -15,8 +16,14 @@ export const siteConfig = {
   description:
     "Vurlo is a URL shortening and lightweight link management platform.",
   url,
-  /** Host shown before the slug, e.g. "vurlo.app" in "vurlo.app/design". */
-  shortLinkHost: hostOf(url),
+  /** Scheme + host, e.g. "https://vurlo.app". Auth callbacks and short links are built on it. */
+  origin: appUrl.origin,
+  /** Host shown before the slug, e.g. "vurlo.app" in "vurlo.app/design". Short links live on the app's own origin (no custom domains). */
+  shortLinkHost: appUrl.host,
 } as const;
 
-export type SiteConfig = typeof siteConfig;
+/** The absolute short URL that resolves, e.g. "https://vurlo.app/design". */
+export const shortUrlFor = (slug: string) => `${siteConfig.origin}/${slug}`;
+
+/** The short URL without its scheme, for display: "vurlo.app/design". */
+export const displayUrlFor = (slug: string) => `${siteConfig.shortLinkHost}/${slug}`;

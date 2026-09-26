@@ -11,12 +11,8 @@ export interface MenuItem {
   label: string;
   icon?: LucideIcon;
   onSelect?: () => void;
+  /** In-app page to open (client-side navigation). */
   href?: string;
-  external?: boolean;
-  /** Visible but inert, e.g. a feature that is not built yet. Stays focusable so it can be discovered. */
-  disabled?: boolean;
-  /** Small trailing text, e.g. "Coming soon". */
-  hint?: string;
   tone?: "danger";
   dividerBefore?: boolean;
 }
@@ -160,47 +156,30 @@ export function Menu({ label, items, className }: MenuProps) {
             const Icon = item.icon;
             const classes = cn(
               "flex min-h-11 w-full items-center gap-3 rounded-(--radius-md) px-3 text-left text-[15px] font-medium",
-              item.disabled ? "cursor-not-allowed text-(--color-muted)" : "hover:bg-(--color-mist-100) focus:bg-(--color-mist-100)",
-              item.tone === "danger" && !item.disabled && "text-(--color-danger-700)",
+              "hover:bg-(--color-mist-100) focus:bg-(--color-mist-100)",
+              item.tone === "danger" && "text-(--color-danger-700)",
             );
             const content = (
               <>
                 {Icon ? <Icon size={18} aria-hidden="true" className="flex-none" /> : <span className="w-[18px] flex-none" />}
                 <span className="min-w-0 flex-1">{item.label}</span>
-                {item.hint ? <span className="text-small flex-none text-(--color-muted)">{item.hint}</span> : null}
               </>
             );
             const divider = item.dividerBefore ? <div role="separator" className="my-1 h-px bg-(--color-border)" /> : null;
-            if (item.href && !item.disabled) {
+            if (item.href) {
               return (
                 <div key={item.key} role="none">
                   {divider}
-                  {item.external ? (
-                    <a
-                      ref={(n) => { itemRefs.current[i] = n; }}
-                      role="menuitem"
-                      tabIndex={-1}
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={classes}
-                      onClick={() => close(false)}
-                    >
-                      {content}
-                    </a>
-                  ) : (
-                    // In-app pages navigate client-side instead of reloading the app.
-                    <Link
-                      ref={(n) => { itemRefs.current[i] = n; }}
-                      role="menuitem"
-                      tabIndex={-1}
-                      href={item.href}
-                      className={classes}
-                      onClick={() => close(false)}
-                    >
-                      {content}
-                    </Link>
-                  )}
+                  <Link
+                    ref={(n) => { itemRefs.current[i] = n; }}
+                    role="menuitem"
+                    tabIndex={-1}
+                    href={item.href}
+                    className={classes}
+                    onClick={() => close(false)}
+                  >
+                    {content}
+                  </Link>
                 </div>
               );
             }
@@ -212,10 +191,8 @@ export function Menu({ label, items, className }: MenuProps) {
                   type="button"
                   role="menuitem"
                   tabIndex={-1}
-                  aria-disabled={item.disabled || undefined}
                   className={classes}
                   onClick={() => {
-                    if (item.disabled) return;
                     close(true); // focus returns to the trigger first, so a dialog opened next restores focus there
                     item.onSelect?.();
                   }}

@@ -1,11 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
-  NO_CLICKS_MESSAGE,
-  emptyAccountMetrics,
   emptyLinkMetrics,
   isBreakdownDimension,
-  toAccountMetrics,
   toLinkMetrics,
   toTimeseries,
   withPercentages,
@@ -13,11 +10,9 @@ import {
 import {
   bucketForPreset,
   isAnalyticsPreset,
-  parseBucket,
   parsePreset,
   resolvePresetRange,
 } from "@/lib/analytics/presets";
-import { createAnalyticsCache } from "@/lib/analytics/queries";
 
 describe("presets (24h / 7d / 30d / all, nothing arbitrary)", () => {
   const now = new Date("2026-04-01T12:00:00Z");
@@ -49,9 +44,6 @@ describe("presets (24h / 7d / 30d / all, nothing arbitrary)", () => {
     assert.equal(parsePreset(undefined), "30d");
     assert.equal(isAnalyticsPreset("all"), true);
     assert.equal(isAnalyticsPreset("ytd"), false);
-    assert.equal(parseBucket("hour"), "hour");
-    assert.equal(parseBucket("minute"), "day");
-    assert.equal(parseBucket(null), "day");
   });
 });
 
@@ -75,9 +67,7 @@ describe("metric shaping (definitions, empty states)", () => {
 
   it("returns an intentional empty state, never bare zeros", () => {
     assert.deepEqual(toLinkMetrics(null), emptyLinkMetrics());
-    assert.deepEqual(toAccountMetrics(null), emptyAccountMetrics());
     assert.equal(emptyLinkMetrics().hasData, false);
-    assert.equal(NO_CLICKS_MESSAGE, "No clicks yet.");
     const zeroRow = toLinkMetrics({ total_requests: 0 });
     assert.equal(zeroRow.hasData, false);
     assert.equal(zeroRow.lastClickedAt, null);
@@ -131,34 +121,5 @@ describe("percentages (from real data, share of human clicks)", () => {
     assert.equal(rows[0]!.pct, 0);
     assert.deepEqual(withPercentages([]), []);
     assert.deepEqual(withPercentages(null), []);
-  });
-});
-
-describe("analytics cache (deliberate, documented staleness)", () => {
-  it("serves cached values until TTL expiry", async () => {
-    const cache = createAnalyticsCache(30);
-    let calls = 0;
-    const fetch = async () => ++calls;
-    assert.equal(await cache.wrap("k", fetch), 1);
-    assert.equal(await cache.wrap("k", fetch), 1);
-    assert.equal(calls, 1);
-    await new Promise((r) => setTimeout(r, 40));
-    assert.equal(await cache.wrap("k", fetch), 2);
-    assert.equal(calls, 2);
-  });
-
-  it("isolates keys and supports invalidation", async () => {
-    const cache = createAnalyticsCache(60_000);
-    let calls = 0;
-    const fetch = async () => ++calls;
-    await cache.wrap("a", fetch);
-    await cache.wrap("b", fetch);
-    assert.equal(calls, 2);
-    cache.invalidate("a");
-    await cache.wrap("a", fetch);
-    assert.equal(calls, 3);
-    cache.clear();
-    await cache.wrap("b", fetch);
-    assert.equal(calls, 4);
   });
 });

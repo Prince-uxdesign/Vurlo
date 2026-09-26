@@ -55,5 +55,5 @@ Functions callable from the API (everything else is service-role only, and
 new functions are not executable by API roles unless a migration grants it):
 
 - **anon**: `resolve_link` (status + destination for active links only; no ids, owner or timestamps), plus pure helpers `effective_link_status`, `is_reserved_slug`.
-- **authenticated**: `list_my_links`, `my_link_stats` (security invoker, RLS applies); `owns_link`, `my_link_metrics`, `my_link_timeseries`, `my_link_breakdown`, `my_link_event_stats`, `my_account_metrics`, `my_links_clicks`, `my_account_timeseries`, `my_top_links`, `my_recent_activity` (security definer with an explicit `auth.uid()` ownership predicate; another user's link returns nothing, only aggregates ever leave); `active_link_limit`, `max_slug_changes`.
+- **authenticated**: `list_my_links`, `my_link_stats` (security invoker, RLS applies); `owns_link`, `my_link_metrics`, `my_link_timeseries`, `my_link_breakdown`, `my_account_metrics`, `my_links_clicks`, `my_account_timeseries`, `my_top_links`, `my_recent_activity` (security definer with an explicit `auth.uid()` ownership predicate; another user's link returns nothing, only aggregates ever leave); `active_link_limit`, `max_slug_changes`.
 - **service role only**: `record_link_event`, `consume_rate_limit`, `is_slug_taken`.

@@ -8,7 +8,8 @@ interface StatusFields {
 /**
  * Expiry is deterministic: a stored `active` link whose `expires_at` has
  * passed is expired, with no background job needed. Mirrors
- * `public.effective_link_status()` in SQL.
+ * `public.effective_link_status()` in SQL, which is what the redirect and
+ * the workspace list use; this copy serves rows read directly from the table.
  *
  * Only `active` becomes `expired`. A disabled, archived or deleted link
  * keeps that status even after its expiry date.

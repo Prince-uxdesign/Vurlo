@@ -25,8 +25,8 @@
  * dropped. "Direct" referrer means missing/stripped referrer as often as a
  * typed URL (browsers + privacy tools strip it routinely).
  *
- * This module is client-safe (no `server-only`): the future dashboard can
- * import the types, empty states and percentage math directly.
+ * Client-safe (no `server-only`): components import the types and the
+ * percentage math directly.
  */
 
 export interface LinkMetrics {
@@ -57,18 +57,6 @@ export interface BreakdownRow {
   pct: number;
 }
 
-export interface AccountMetrics {
-  totalRequests: number;
-  clicks: number;
-  bots: number;
-  scanners: number;
-  approxUniques: number;
-  linksClicked: number;
-  totalLinks: number;
-  lastClickedAt: string | null;
-  hasData: boolean;
-}
-
 export type BreakdownDimension = "device" | "browser" | "os" | "country" | "referrer";
 
 export const BREAKDOWN_DIMENSIONS: readonly BreakdownDimension[] = [
@@ -86,9 +74,6 @@ export function isBreakdownDimension(value: unknown): value is BreakdownDimensio
   );
 }
 
-/** Intentional empty states -- never "0% charts with no explanation". */
-export const NO_CLICKS_MESSAGE = "No clicks yet.";
-
 export function emptyLinkMetrics(): LinkMetrics {
   return {
     totalRequests: 0,
@@ -98,20 +83,6 @@ export function emptyLinkMetrics(): LinkMetrics {
     unknownTraffic: 0,
     approxUniques: 0,
     approxHumanUniques: 0,
-    lastClickedAt: null,
-    hasData: false,
-  };
-}
-
-export function emptyAccountMetrics(): AccountMetrics {
-  return {
-    totalRequests: 0,
-    clicks: 0,
-    bots: 0,
-    scanners: 0,
-    approxUniques: 0,
-    linksClicked: 0,
-    totalLinks: 0,
     lastClickedAt: null,
     hasData: false,
   };
@@ -146,23 +117,6 @@ export function toLinkMetrics(row: Record<string, unknown> | null | undefined): 
     unknownTraffic: toNumber(row.unknown_traffic),
     approxUniques: toNumber(row.approx_uniques),
     approxHumanUniques: toNumber(row.approx_human_uniques),
-    lastClickedAt: toIsoString(row.last_clicked_at),
-    hasData: totalRequests > 0,
-  };
-}
-
-/** Shapes a `my_account_metrics` row. */
-export function toAccountMetrics(row: Record<string, unknown> | null | undefined): AccountMetrics {
-  if (!row) return emptyAccountMetrics();
-  const totalRequests = toNumber(row.total_requests);
-  return {
-    totalRequests,
-    clicks: toNumber(row.human_clicks),
-    bots: toNumber(row.bots),
-    scanners: toNumber(row.scanners),
-    approxUniques: toNumber(row.approx_uniques),
-    linksClicked: toNumber(row.links_clicked),
-    totalLinks: toNumber(row.total_links),
     lastClickedAt: toIsoString(row.last_clicked_at),
     hasData: totalRequests > 0,
   };

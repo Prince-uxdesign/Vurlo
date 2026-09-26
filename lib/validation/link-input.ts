@@ -76,7 +76,7 @@ function isPrivateIpv4(host: string): boolean {
 
 function ownHostname(): string | null {
   try {
-    return new URL(siteConfig.url).hostname.toLowerCase();
+    return new URL(siteConfig.origin).hostname.toLowerCase();
   } catch {
     return null;
   }
@@ -259,24 +259,6 @@ export function isSafeRedirectUrl(value: string): boolean {
   } catch {
     return false;
   }
-}
-
-/** Validates an explicit expiry date (future, within a year). */
-export function validateExpiresAt(
-  raw: string,
-  now: Date = new Date(),
-): Validation<string> {
-  const time = Date.parse(raw);
-  if (Number.isNaN(time)) {
-    return { ok: false, code: "invalid_expiration", error: "That expiry date isn't valid." };
-  }
-  if (time <= now.getTime()) {
-    return { ok: false, code: "invalid_expiration", error: "The expiry date must be in the future." };
-  }
-  if (time > now.getTime() + 366 * 24 * 60 * 60 * 1000) {
-    return { ok: false, code: "invalid_expiration", error: "Expiry can be at most one year away." };
-  }
-  return { ok: true, value: new Date(time).toISOString() };
 }
 
 /** True when the user typed a host without a scheme, so we will add https://. */

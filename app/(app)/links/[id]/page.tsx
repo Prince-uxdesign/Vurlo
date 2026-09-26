@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, cache } from "react";
 import { ArrowLeft } from "lucide-react";
 import { LinkAnalytics } from "@/components/analytics/link-analytics";
 import { AnalyticsSkeleton } from "@/components/analytics/analytics-skeleton";
@@ -16,18 +16,32 @@ import { parsePreset } from "@/lib/analytics/presets";
 import type { AnalyticsPreset } from "@/lib/analytics/presets";
 import { logServerError } from "@/lib/links/log";
 import { createClient } from "@/lib/supabase/server";
-import { siteConfig } from "@/config/site";
+import { displayUrlFor, shortUrlFor } from "@/config/site";
 
 type Params = { params: Promise<{ id: string }> };
+type UserClient = NonNullable<Awaited<ReturnType<typeof createClient>>>;
+
+/**
+ * The caller's link, read once per request: metadata and the page share it.
+ * Keyed by id only (a fresh Supabase client per call would defeat `cache`).
+ */
+const loadOwnedLink = cache(async (id: string) => {
+  const supabase = await createClient();
+  if (!supabase) {
+    logServerError("link_detail_unavailable", "client not configured");
+    return null;
+  }
+  return getOwnedLink(supabase, id).catch((error) => {
+    logServerError("link_detail_failed", error);
+    return null;
+  });
+});
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { id } = await params;
-  const supabase = await createClient();
-  const link = supabase ? await getOwnedLink(supabase, id).catch(() => null) : null;
-  return { title: link ? `${siteConfig.shortLinkHost}/${link.slug}` : "Link" };
+  const link = await loadOwnedLink(id);
+  return { title: link ? displayUrlFor(link.slug) : "Link" };
 }
-
-type UserClient = NonNullable<Awaited<ReturnType<typeof createClient>>>;
 
 async function AnalyticsSection({ supabase, userId, linkId, preset, shortUrl }: { supabase: UserClient; userId: string; linkId: string; preset: AnalyticsPreset; shortUrl: string }) {
   const loaded = await analyticsGuard.load(userId, `link:${linkId}:${preset}`, ANALYTICS_TTL.link, () =>
@@ -57,25 +71,18 @@ export default async function LinkDetailPage({
   params,
   searchParams,
 }: Params & { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const user = await requireUser("/links");
   const { id } = await params;
+  const user = await requireUser(`/links/${encodeURIComponent(id)}`);
   const query = await searchParams;
   const preset = parsePreset(Array.isArray(query.range) ? query.range[0] : query.range);
 
+  const link = await loadOwnedLink(id);
   const supabase = await createClient();
-  if (!supabase) {
-    logServerError("link_detail_unavailable", "client not configured");
-    notFound();
-  }
-  const link = await getOwnedLink(supabase, id).catch((error) => {
-    logServerError("link_detail_failed", error);
-    return null;
-  });
-  if (!link) notFound();
+  if (!link || !supabase) notFound();
 
   const now = new Date();
-  const displayUrl = `${siteConfig.shortLinkHost}/${link.slug}`;
-  const shortUrl = `${new URL(siteConfig.url).origin}/${link.slug}`;
+  const displayUrl = displayUrlFor(link.slug);
+  const shortUrl = shortUrlFor(link.slug);
 
   return (
     <LinkManagerProvider link={link} displayUrl={displayUrl} shortUrl={shortUrl}>

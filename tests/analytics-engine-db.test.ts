@@ -2,13 +2,11 @@ import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 import type { PGlite } from "@electric-sql/pglite";
 import {
-  getAccountMetrics,
-  getCachedLinkMetrics,
   getLinkBreakdown,
   getLinkMetrics,
   getLinkTimeseries,
-  createAnalyticsCache,
 } from "@/lib/analytics/queries";
+import { getAccountClicks } from "@/lib/dashboard/queries";
 import { createTestDb } from "./helpers/pglite-client";
 
 const USER_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -473,27 +471,9 @@ describe("query layer wrappers (secure, fail-safe, cached)", () => {
     assert.equal(await getLinkBreakdown("not-a-uuid", "device", "all", { client: liveClient(USER_A) }), null);
   });
 
-  it("getAccountMetrics always returns a state object", async () => {
-    const a = await getAccountMetrics("all", { client: liveClient(USER_A) });
-    assert.equal(a.hasData, true);
-    assert.ok(a.totalRequests >= 14 && a.linksClicked >= 3);
-    const empty = await getAccountMetrics("all", { client: null });
-    assert.equal(empty.hasData, false);
-  });
-
-  it("cached metrics isolate users (no cross-user serving)", async () => {
-    const cache = createAnalyticsCache(60_000);
-    let calls = 0;
-    const counting = {
-      rpc: async () => {
-        calls += 1;
-        return { data: [], error: null as { message: string } | null };
-      },
-    };
-    await getCachedLinkMetrics(USER_A, linkA1, "24h", { client: counting, cache });
-    await getCachedLinkMetrics(USER_A, linkA1, "24h", { client: counting, cache });
-    assert.equal(calls, 1);
-    await getCachedLinkMetrics(USER_B, linkA1, "24h", { client: counting, cache });
-    assert.equal(calls, 2);
+  it("getAccountClicks counts the caller's human clicks, and is null (never 0) when unavailable", async () => {
+    const a = await getAccountClicks(liveClient(USER_A));
+    assert.ok(a !== null && a >= 8, `clicks=${a}`);
+    assert.equal(await getAccountClicks(null), null);
   });
 });

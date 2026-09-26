@@ -1,4 +1,5 @@
 import "server-only";
+import { getEffectiveStatus } from "@/lib/links/status";
 import type { LinkStatus } from "@/lib/links/types";
 import type { LinkListItem } from "@/lib/links/workspace-types";
 import { logServerError } from "@/lib/links/log";
@@ -33,10 +34,6 @@ export interface LinkAnalyticsData {
   breakdowns: Record<BreakdownDimension, BreakdownRow[]>;
 }
 
-export interface LinkAnalyticsDetail extends LinkAnalyticsData {
-  link: LinkListItem;
-}
-
 /**
  * One owned, non-deleted link. Null when it isn't the caller's (unknown id,
  * another user's id, deleted) or the database is unavailable -- the page
@@ -65,7 +62,7 @@ export async function getOwnedLink(client: UserClient, linkId: string): Promise<
     destinationUrl: row.destination_url,
     isCustomAlias: row.is_custom_alias,
     status: row.status as LinkStatus,
-    effectiveStatus: effectiveStatus(row.status, row.expires_at),
+    effectiveStatus: getEffectiveStatus({ status: row.status as LinkStatus, expires_at: row.expires_at }),
     expiresAt: row.expires_at,
     utmSource: row.utm_source,
     utmMedium: row.utm_medium,
@@ -107,24 +104,4 @@ export async function getLinkAnalytics(
       BREAKDOWN_DIMENSIONS.map((d, i) => [d, breakdowns[i] ?? []]),
     ) as Record<BreakdownDimension, BreakdownRow[]>,
   };
-}
-
-/** Link + analytics in one call. */
-export async function getLinkAnalyticsDetail(
-  client: UserClient,
-  linkId: string,
-  presetInput: unknown,
-): Promise<LinkAnalyticsDetail | null> {
-  const link = await getOwnedLink(client, linkId);
-  if (!link) return null;
-  const data = await getLinkAnalytics(client, link.id, presetInput);
-  return data ? { link, ...data } : null;
-}
-
-/** Mirrors public.effective_link_status(): expired derives from the DB clock. */
-function effectiveStatus(status: string, expiresAt: string | null): LinkStatus {
-  if (status === "active" && expiresAt && new Date(expiresAt).getTime() <= Date.now()) {
-    return "expired";
-  }
-  return status as LinkStatus;
 }

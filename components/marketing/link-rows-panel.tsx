@@ -1,4 +1,4 @@
-import { CircleCheck, Clock, Pause } from "lucide-react";
+import { Ban, CircleCheck, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { siteConfig } from "@/config/site";
 
@@ -30,8 +30,8 @@ const rows = [
     short: `${host}/old-deck`,
     destination: "example.com/press/deck-v2.pdf",
     clicks: "41",
-    status: "Paused",
-    Icon: Pause,
+    status: "Disabled",
+    Icon: Ban,
   },
 ] as const;
 

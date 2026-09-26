@@ -1,6 +1,6 @@
 import { CalendarClock, CalendarPlus, MousePointerClick, Tag } from "lucide-react";
 import Link from "next/link";
-import { siteConfig } from "@/config/site";
+import { displayUrlFor, shortUrlFor } from "@/config/site";
 import { formatCount } from "@/lib/analytics/labels";
 import type { LinkClicks } from "@/lib/dashboard/shape";
 import { describeExpiry, formatDate } from "@/lib/format";
@@ -22,8 +22,7 @@ import { StatusBadge } from "./status-badge";
  */
 export function LinkRow({ link, now, clicks }: { link: LinkListItem; now: Date; clicks?: LinkClicks | null }) {
   const expiry = describeExpiry(link.expiresAt, now);
-  const displayUrl = `${siteConfig.shortLinkHost}/${link.slug}`;
-  const origin = new URL(siteConfig.url).origin;
+  const displayUrl = displayUrlFor(link.slug);
   // Only whether visitors arrive tagged; the values themselves live in Edit.
   const tagged = hasUtm(link.destinationUrl, {
     source: link.utmSource,
@@ -86,7 +85,7 @@ export function LinkRow({ link, now, clicks }: { link: LinkListItem; now: Date; 
           </div>
 
           <div className="@2xl:col-start-2 @2xl:row-span-2 @2xl:row-start-1 @4xl:col-start-3 @4xl:row-span-1 @4xl:self-center">
-            <LinkActions link={link} displayUrl={displayUrl} shortUrl={`${origin}/${link.slug}`} />
+            <LinkActions link={link} displayUrl={displayUrl} shortUrl={shortUrlFor(link.slug)} />
           </div>
         </div>
       </div>

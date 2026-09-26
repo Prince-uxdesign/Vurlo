@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/server";
  */
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
-  const origin = new URL(siteConfig.url).origin;
+  const { origin } = siteConfig;
   const to = (reason: string) => NextResponse.redirect(`${origin}/auth/error?reason=${reason}`);
 
   if (params.get("error")) {

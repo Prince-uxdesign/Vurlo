@@ -158,10 +158,9 @@ export async function changeEmail(_prev: SettingsFormState, formData: FormData):
 
   const supabase = await createClient();
   if (!supabase) return { status: "error", message: AUTH_MESSAGES.unavailable, email: typed };
-  const origin = new URL(siteConfig.url).origin;
   const { error } = await supabase.auth.updateUser(
     { email: email.value },
-    { emailRedirectTo: `${origin}/settings/account?notice=email-changed` },
+    { emailRedirectTo: `${siteConfig.origin}/settings/account?notice=email-confirmation` },
   );
   const sent: SettingsFormState = {
     status: "success",
@@ -260,6 +259,6 @@ export async function deleteAccountAction(_prev: SettingsFormState, formData: Fo
   }
 
   revalidatePath("/", "layout");
-  redirect("/?notice=account-deleted");
+  redirect("/");
 }
 

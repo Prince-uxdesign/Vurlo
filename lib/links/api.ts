@@ -1,5 +1,5 @@
 import "server-only";
-import { siteConfig } from "@/config/site";
+import { displayUrlFor, shortUrlFor } from "@/config/site";
 import { BURST, burst as sharedBurst } from "@/lib/security/burst";
 import type { createBurstLimiter } from "@/lib/security/burst";
 import { waitPhrase } from "@/lib/security/wait";
@@ -181,14 +181,13 @@ export async function handleCreateLinkRequest(
     customAlias: link.isCustomAlias,
     destinationHost: new URL(link.destinationUrl).hostname,
   });
-  const displayUrl = `${siteConfig.shortLinkHost}/${link.slug}`;
   return json(
     {
       ok: true,
       link: {
         slug: link.slug,
-        shortUrl: `${new URL(siteConfig.url).origin}/${link.slug}`,
-        displayUrl,
+        shortUrl: shortUrlFor(link.slug),
+        displayUrl: displayUrlFor(link.slug),
         destinationUrl: applyUtm(link.destinationUrl, {
           source: link.utmSource,
           medium: link.utmMedium,

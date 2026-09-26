@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Vurlo design tokens — Phase 0A foundation.
+ * Vurlo design tokens.
  * Source of truth: vurlo-design-system.md (Section 13).
  * That file wins over generated code on any conflict.
  */
@@ -21,7 +21,6 @@
   --color-ember-600: #d14a0a;
   --color-blaze-500: #f97316;
   --color-blaze-200: #fbd3ae;
-  --color-glow-ember: rgba(194, 65, 12, 0.45);
 
   /* Semantic */
   --color-success-700: #15803d;
@@ -47,7 +46,7 @@
   --font-display: "Schibsted Grotesk", -apple-system, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
 
-  /* Radius — pill reserved for primary CTA + badges only */
+  /* Radius — pill reserved for status badges */
   --radius-sm: 8px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -58,7 +57,6 @@
   --shadow-none: none;
   --shadow-float: 0 4px 16px rgba(0, 0, 0, 0.08);
   --shadow-modal: 0 24px 48px rgba(0, 0, 0, 0.18);
-  --shadow-glow-primary: 0 8px 20px -4px rgba(194, 65, 12, 0.45);
 }
 
 :root {
@@ -200,40 +198,30 @@ video {
   min-height: 44px;
   gap: 8px;
   padding: 12px 24px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   font: 600 15px/1.2 var(--font-display);
   color: #ffffff;
-  background: linear-gradient(180deg, #e2600e 0%, #c2410c 55%, #ad380a 100%);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -6px 10px rgba(0, 0, 0, 0.12),
-    0 8px 20px -4px var(--color-glow-ember);
+  background: var(--color-ember-700);
+  border: 1px solid var(--color-ember-700);
   transition:
     transform 120ms ease,
-    box-shadow 120ms ease,
     background 120ms ease;
   cursor: pointer;
 }
 
 .btn-primary:hover {
-  background: linear-gradient(180deg, #ea6c1a 0%, #d14a0a 55%, #b23a0a 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -6px 10px rgba(0, 0, 0, 0.14),
-    0 10px 26px -4px rgba(194, 65, 12, 0.55);
+  background: #a93708;
 }
 
 .btn-primary:active {
   transform: scale(0.98);
-  background: #ad380a;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+  background: #8f2f07;
 }
 
 .btn-primary:disabled {
   background: var(--color-mist-300);
+  border-color: var(--color-mist-300);
   color: var(--color-stone-500);
-  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -519,39 +507,6 @@ video {
   }
 }
 
-/* ---------- Tooltip (CSS-only, shows on hover + keyboard focus) ---------- */
-
-.tooltip-root {
-  position: relative;
-  display: inline-flex;
-}
-
-.tooltip-bubble {
-  position: absolute;
-  z-index: 50;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: 240px;
-  width: max-content;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  background: #000000;
-  color: #ffffff;
-  font-size: 13px;
-  line-height: 1.4;
-  font-weight: 500;
-  text-align: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease;
-}
-
-.tooltip-root:hover .tooltip-bubble,
-.tooltip-root:focus-within .tooltip-bubble {
-  opacity: 1;
-}
-
 /* ---------- Toast ---------- */
 
 .toast-viewport {
@@ -599,29 +554,9 @@ video {
   }
 }
 
-/* ---------- Marketing surface (.flat-ui) ----------
- * The public site is flat: no gradients, glow, or pills. Scoped so the
- * in-app primary button keeps the design-system treatment.
+/* ---------- Product surfaces (.flat-ui) ----------
+ * Every page shell (marketing, app, auth, status pages) sets .flat-ui.
  */
-
-.flat-ui .btn-primary {
-  border-radius: var(--radius-md);
-  background: var(--color-ember-700);
-  border-color: var(--color-ember-700);
-  box-shadow: none;
-}
-.flat-ui .btn-primary:hover {
-  background: #a93708;
-  box-shadow: none;
-}
-.flat-ui .btn-primary:active {
-  background: #8f2f07;
-  box-shadow: none;
-}
-.flat-ui .btn-primary:disabled {
-  background: var(--color-mist-300);
-  border-color: var(--color-mist-300);
-}
 
 .flat-ui .input,
 .flat-ui .select {

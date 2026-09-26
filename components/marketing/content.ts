@@ -17,7 +17,7 @@ export const benefits = [
   },
   {
     title: "Link control",
-    body: "Change where a short link goes without changing the link itself. Pause or expire it when you're done.",
+    body: "Change where a short link goes without changing the link itself. Disable it or let it expire when you're done.",
   },
   {
     title: "Useful insight",
@@ -69,7 +69,7 @@ export const useCases = [
 export const trustPoints = [
   {
     title: "Account ownership",
-    body: "Links you create in an account belong to you. Only you can edit, pause, or delete them.",
+    body: "Links you create in an account belong to you. Only you can edit, disable, or delete them.",
   },
   {
     title: "Secure link management",
@@ -81,7 +81,7 @@ export const trustPoints = [
   },
   {
     title: "Abuse controls",
-    body: "Limits and reporting help keep short links from being used to cause harm.",
+    body: "Rate limits, destination checks and reserved addresses help keep short links from being used to cause harm.",
   },
   {
     title: "Protected data",
@@ -113,7 +113,7 @@ export const faqs = [
   {
     question: "Do short links expire?",
     answer:
-      "Yes. A link made without an account expires within 30 days. When you create one, choose 24 hours, 7 days or 30 days.",
+      "Links made without an account always do: choose 24 hours, 7 days or 30 days. With an account you can also keep a link with no expiry, and change the expiry later.",
   },
   {
     question: "What happens when a link expires?",

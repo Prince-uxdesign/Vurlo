@@ -1,10 +1,7 @@
 /**
- * Environment helpers (Phase 0A).
- *
- * Supabase variables are intentionally optional at this stage so static
- * development (`next dev`, `next build`) does not break when they are absent.
- * Later phases that require auth/links should check explicitly and fail
- * with a clear message.
+ * Environment helpers. Supabase variables are optional so `next build` works
+ * without them; each client factory returns null when they are missing and
+ * its callers degrade to an "unavailable" state.
  */
 
 export function getSupabaseUrl(): string | undefined {
@@ -13,11 +10,6 @@ export function getSupabaseUrl(): string | undefined {
 
 export function getSupabaseAnonKey(): string | undefined {
   return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || undefined;
-}
-
-/** True when both public Supabase vars are present. */
-export function isSupabaseConfigured(): boolean {
-  return Boolean(getSupabaseUrl() && getSupabaseAnonKey());
 }
 
 /**

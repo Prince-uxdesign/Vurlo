@@ -11,7 +11,6 @@ import {
   normalizeDestination,
   resolveExpiration,
   validateAlias,
-  validateExpiresAt,
   validateUtm,
 } from "@/lib/validation/link-input";
 
@@ -117,13 +116,6 @@ describe("expiration", () => {
   it("rejects unknown presets", () => {
     assert.equal(resolveExpiration("forever" as never, { now }).ok, false);
     assert.equal(resolveExpiration("1d; drop table" as never, { now }).ok, false);
-  });
-
-  it("validates explicit dates", () => {
-    assert.equal(validateExpiresAt("2025-12-31T00:00:00Z", now).ok, false);
-    assert.equal(validateExpiresAt("not a date", now).ok, false);
-    assert.equal(validateExpiresAt("2030-01-01T00:00:00Z", now).ok, false);
-    assert.equal(validateExpiresAt("2026-02-01T00:00:00Z", now).ok, true);
   });
 
   it("derives expired status without a stored flag", () => {

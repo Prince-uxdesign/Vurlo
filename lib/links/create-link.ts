@@ -24,7 +24,7 @@ const MAX_SLUG_ATTEMPTS = 5;
 const SLUG_UNIQUE_CONSTRAINT = "links_slug_key";
 
 interface CreateLinkOptions {
-  /** Set by a future authenticated path after verifying the session. */
+  /** The verified session user (never taken from the request body). Unset = anonymous link. */
   userId?: string;
   /** Injected in tests. Defaults to the service-role client. */
   client?: AdminClient | null;
@@ -44,9 +44,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Validates untrusted input, then inserts a link. This is the only supported
- * write path for links. Nothing calls it from the browser yet: the public
- * endpoint (with rate limiting) lands with the anonymous shortening flow.
+ * Validates untrusted input, then inserts a link. This is the only write
+ * path for links; POST /api/links (lib/links/api.ts) calls it after rate
+ * limiting.
  *
  * `input` is typed `unknown` on purpose. It comes from a request body, so
  * every field is re-validated here regardless of what the UI checked.

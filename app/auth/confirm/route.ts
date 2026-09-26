@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const tokenHash = params.get("token_hash");
   const type = params.get("type") as EmailOtpType | null;
-  const origin = new URL(siteConfig.url).origin;
+  const { origin } = siteConfig;
   const fail = () => NextResponse.redirect(`${origin}/auth/error?reason=link_expired`);
 
   if (!tokenHash || !type || !TYPES.includes(type) || tokenHash.length > 512) return fail();

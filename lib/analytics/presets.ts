@@ -1,18 +1,18 @@
 /**
  * Phase 6B: MVP time-range presets for analytics.
  *
- * The dashboard will eventually offer 24 hours / 7 days / 30 days / all
- * time. This module maps those presets onto concrete (start, end) bounds for
- * the SQL aggregation functions. No arbitrary date-range complexity: four
- * presets, two bucket sizes.
+ * The link page offers 24 hours / 7 days / 30 days / all time. This module
+ * maps those presets onto concrete (start, end) bounds for the SQL
+ * aggregation functions. No arbitrary date ranges: four presets, two
+ * bucket sizes.
  *
  * Bucket policy (keeps payloads chart-sized at every viewport, 320px phones
  * included -- see §17):
  *   24h -> hourly (24 buckets)
  *   7d  -> daily  (7 buckets)
  *   30d -> daily  (30 buckets)
- *   all -> daily  (capped at 370 buckets by SQL; older history still counts
- *          in the totals, only the series is windowed)
+ *   all -> daily, charting the trailing 30 days (older history still counts
+ *          in the totals; see getLinkTimeseries)
  *
  * Ranges are half-open [start, end): an event exactly at `end` belongs to
  * the next window. `end` defaults to `now`.
@@ -55,9 +55,4 @@ export function resolvePresetRange(preset: AnalyticsPreset, now: Date = new Date
 /** Bucket sized for the preset so series stay compact (≤ ~30 points). */
 export function bucketForPreset(preset: AnalyticsPreset): TimeseriesBucket {
   return preset === "24h" ? "hour" : "day";
-}
-
-/** 'hour' only for short ranges; anything else folds to 'day' (matches SQL). */
-export function parseBucket(value: unknown): TimeseriesBucket {
-  return value === "hour" ? "hour" : "day";
 }

@@ -1,5 +1,3 @@
-import type { Tables } from "@/types/database";
-
 /** Lifecycle states stored on a link. `expired` is also derived — see status.ts. */
 export const LINK_STATUSES = [
   "active",
@@ -9,9 +7,6 @@ export const LINK_STATUSES = [
   "deleted",
 ] as const;
 export type LinkStatus = (typeof LINK_STATUSES)[number];
-
-/** Database row for `public.links`, with `status` narrowed to LinkStatus. */
-export type Link = Omit<Tables<"links">, "status"> & { status: LinkStatus };
 
 export type ExpirationOption = "never" | "1d" | "7d" | "30d";
 

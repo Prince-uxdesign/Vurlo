@@ -17,7 +17,7 @@ export const fontMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
+  metadataBase: new URL(siteConfig.origin),
   title: {
     default: siteConfig.name,
     template: `%s | ${siteConfig.name}`,

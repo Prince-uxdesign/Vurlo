@@ -43,7 +43,6 @@ const tooMany = (seconds: number) => `Too many attempts. Try again in ${waitPhra
 const NUDGE_AFTER_FAILURES = 3;
 /** Longer than any real password; refused before it reaches the auth server. */
 const MAX_PASSWORD_LENGTH = 1024;
-const origin = () => new URL(siteConfig.url).origin;
 const text = (formData: FormData, key: string) => {
   const value = formData.get(key);
   return typeof value === "string" ? value : "";
@@ -59,8 +58,7 @@ export async function signIn(_prev: AuthFormState, formData: FormData): Promise<
   if (!emailCheck.ok) fieldErrors.email = emailCheck.error;
   // Sign-in never judges password strength: existing passwords may predate the policy.
   if (!password) fieldErrors.password = "Enter your password.";
-  if (fieldErrors.email || fieldErrors.password) return { status: "error", fieldErrors, email };
-  if (!emailCheck.ok) return { status: "error", email };
+  if (!emailCheck.ok || !password) return { status: "error", fieldErrors, email };
 
   if (password.length > MAX_PASSWORD_LENGTH) {
     return { status: "error", message: AUTH_MESSAGES.invalid_credentials, email };
@@ -207,7 +205,7 @@ export async function signInWithGoogle(formData: FormData): Promise<void> {
   // redirectTo is built from our configured origin, never from request headers.
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${origin()}/auth/callback?next=${encodeURIComponent(next)}` },
+    options: { redirectTo: `${siteConfig.origin}/auth/callback?next=${encodeURIComponent(next)}` },
   });
   if (error || !data.url) {
     if (error) logServerError("oauth_start_failed", error, { code: error.code });

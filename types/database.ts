@@ -220,17 +220,6 @@ export type Database = {
         };
         Returns: string;
       };
-      my_link_event_stats: {
-        Args: { p_link_id: string };
-        Returns: {
-          total: number;
-          human: number;
-          bots: number;
-          scanners: number;
-          approx_uniques: number;
-          last_clicked_at: string | null;
-        }[];
-      };
       owns_link: {
         Args: { p_link_id: string };
         Returns: boolean;

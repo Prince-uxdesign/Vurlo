@@ -2,7 +2,7 @@
 
 import { ListFilter, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -16,9 +16,6 @@ const SEARCH_DEBOUNCE_MS = 350;
 
 const countFor = (stats: LinkStats, filter: LinkFilter) =>
   ({ all: stats.listed, active: stats.active, expiring: stats.expiring, expired: stats.expired, disabled: stats.disabled, archived: stats.archived })[filter];
-
-const Ctx = createContext<{ pending: boolean } | null>(null);
-export const useWorkspacePending = () => useContext(Ctx)?.pending ?? false;
 
 interface LinksWorkspaceProps {
   params: LinkListParams;
@@ -40,12 +37,12 @@ export function LinksWorkspace({ params, stats, children }: LinksWorkspaceProps)
     startTransition(() => (replace ? router.replace(href, { scroll: false }) : router.push(href, { scroll: false })));
 
   return (
-    <Ctx.Provider value={{ pending }}>
+    <>
       <Toolbar params={params} stats={stats} navigate={navigate} pending={pending} />
       <div aria-busy={pending} className={cn("mt-4 transition-opacity", pending && "opacity-60")}>
         {children}
       </div>
-    </Ctx.Provider>
+    </>
   );
 }
 

@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 import type { PGlite } from "@electric-sql/pglite";
-import { getMyLinkEventStats } from "@/lib/analytics/stats";
 import { recordClickEvent } from "@/lib/analytics/record";
 import { createTestDb } from "./helpers/pglite-client";
 
@@ -10,7 +9,6 @@ const USER_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 
 let db: PGlite;
 let linkA: string;
-let linkB: string;
 
 async function as<T>(role: "anon" | "authenticated" | "service_role", sub: string | null, fn: () => Promise<T>) {
   await db.exec(`select set_config('request.jwt.claim.sub', '${sub ?? ""}', false)`);
@@ -67,10 +65,9 @@ before(async () => {
   );
   await db.exec(`update public.links set status = 'disabled' where slug = 'click-off'`);
   const { rows } = await db.query<{ id: string; slug: string }>(
-    "select id, slug from public.links where slug in ('click-active','click-other')",
+    "select id, slug from public.links where slug = 'click-active'",
   );
-  linkA = rows.find((r) => r.slug === "click-active")!.id;
-  linkB = rows.find((r) => r.slug === "click-other")!.id;
+  linkA = rows[0]!.id;
 });
 
 after(async () => {
@@ -264,33 +261,10 @@ describe("record_link_event() (server-validated, never client-trusted)", () => {
   });
 });
 
-describe("my_link_event_stats() (ownership enforced in the database)", () => {
-  it("returns aggregates to the owner", async () => {
-    const stats = await as("authenticated", USER_A, () =>
-      db.query<Record<string, unknown>>("select * from public.my_link_event_stats($1)", [linkA]),
-    );
-    assert.equal(stats.rows.length, 1);
-    assert.ok(Number(stats.rows[0]!["total"]) >= 5);
-    assert.ok(Number(stats.rows[0]!["human"]) >= 1);
-    assert.ok("visitor_hash" in stats.rows[0]! === false);
-  });
-
-  it("returns zero rows for another user's link (never their data)", async () => {
-    const other = await as("authenticated", USER_B, () =>
-      db.query("select * from public.my_link_event_stats($1)", [linkA]),
-    );
-    assert.equal(other.rows.length, 0);
-    const mine = await as("authenticated", USER_B, () =>
-      db.query("select * from public.my_link_event_stats($1)", [linkB]),
-    );
-    assert.equal(mine.rows.length, 1);
-  });
-
-  it("refuses anonymous callers", async () => {
-    const c = await as("anon", null, () =>
-      code(() => db.query("select * from public.my_link_event_stats($1)", [linkA])),
-    );
-    assert.equal(c, "42501");
+describe("retired analytics reads", () => {
+  it("my_link_event_stats() no longer exists (replaced by my_link_metrics)", async () => {
+    const { rows } = await db.query("select 1 from pg_proc where proname = 'my_link_event_stats'");
+    assert.equal(rows.length, 0);
   });
 });
 
@@ -320,23 +294,5 @@ describe("analytics service wrappers (never throw, never leak)", () => {
       country_code: "US", referrer_source: "direct", traffic_class: "human",
       is_bot: false, visitor_hash: null,
     }, { client: fake }), "evt-1");
-  });
-
-  it("getMyLinkEventStats maps rows, and returns null for bad input / errors / non-owned", async () => {
-    assert.equal(await getMyLinkEventStats("not-a-uuid", { client: null }), null);
-    const ok = {
-      rpc: async () => ({
-        data: [{ total: 10, human: 7, bots: 2, scanners: 1, approx_uniques: 6, last_clicked_at: "2026-01-01T00:00:00.000Z" }],
-        error: null,
-      }),
-    } as never;
-    assert.deepEqual(await getMyLinkEventStats(linkA, { client: ok }), {
-      total: 10, human: 7, bots: 2, scanners: 1, approxUniques: 6,
-      lastClickedAt: "2026-01-01T00:00:00.000Z",
-    });
-    const empty = { rpc: async () => ({ data: [], error: null }) } as never;
-    assert.equal(await getMyLinkEventStats(linkA, { client: empty }), null);
-    const failing = { rpc: async () => ({ data: null, error: { message: "x" } }) } as never;
-    assert.equal(await getMyLinkEventStats(linkA, { client: failing }), null);
   });
 });

@@ -58,6 +58,17 @@ built-in CAPTCHA (Cloudflare Turnstile) on the auth endpoints.
 | QR code fails | The QR dialog shows an error with retry; the link and its copy button are unaffected (QR is generated in the browser, lazily). |
 | Any Supabase call hangs | Cut off by `lib/supabase/fetch.ts` (2.5s redirect, 8s elsewhere). |
 
+## Scheduled jobs
+
+| Job | Schedule | Needs |
+| --- | --- | --- |
+| Purge click events older than 90 days (`/api/cron/purge-events` → `purge_expired_link_events`) | Daily 03:00 UTC (`vercel.json`) | `CRON_SECRET` set in the Vercel project. Vercel Cron sends it as `Authorization: Bearer …`. |
+
+The purge fails closed: without `CRON_SECRET` every call is refused (503,
+`cron_secret_not_configured` logged), so the privacy policy's 90-day
+retention only holds while the secret is configured. A wrong or missing
+header gets 401 and logs `unauthorized_cron_attempt`.
+
 ## Log events
 
 Every line is JSON: `level`, `event`, context fields, and for errors a

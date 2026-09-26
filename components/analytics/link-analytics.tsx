@@ -1,5 +1,6 @@
 import { BREAKDOWN_DIMENSIONS } from "@/lib/analytics/metrics";
 import type { LinkAnalyticsData } from "@/lib/analytics/detail";
+import { bucketForPreset } from "@/lib/analytics/presets";
 import { AnalyticsEmpty } from "./analytics-empty";
 import { AnalyticsSummary } from "./analytics-summary";
 import { BreakdownList } from "./breakdown-list";
@@ -24,7 +25,7 @@ export function LinkAnalytics({ data, shortUrl }: { data: LinkAnalyticsData; sho
       <AnalyticsSummary metrics={metrics} rangeLabel={PRESET_LABELS[preset]} />
       <TrendChart
         points={timeseries}
-        bucket={preset === "24h" ? "hour" : "day"}
+        bucket={bucketForPreset(preset)}
         headingLevel={3}
         windowedNote={preset === "all" ? "Chart shows the last 30 days. Totals above cover all time." : undefined}
       />

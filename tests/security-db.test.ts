@@ -94,7 +94,6 @@ describe("User A against User B's link", () => {
       ["select * from public.my_link_metrics($1, null, null)", [linkB]],
       ["select * from public.my_link_timeseries($1, now() - interval '1 day', now(), 'hour')", [linkB]],
       ["select * from public.my_link_breakdown($1, 'country', null, null)", [linkB]],
-      ["select * from public.my_link_event_stats($1)", [linkB]],
       ["select * from public.my_links_clicks($1)", [[linkB]]],
     ];
     for (const [sql, params] of calls) {

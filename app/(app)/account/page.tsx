@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 
-/** The account page moved into Settings. Old links and bookmarks still land in the right place. */
-export default async function AccountRedirect({ searchParams }: { searchParams: Promise<{ notice?: string }> }) {
-  const { notice } = await searchParams;
-  if (notice === "password-updated") redirect("/settings/security?notice=password-updated");
+/**
+ * The account page moved into Settings. Kept as a redirect because email
+ * templates already pasted into a hosted Supabase project (and emails already
+ * sent) may still point here.
+ */
+export default function AccountRedirect() {
   redirect("/settings/account");
 }
