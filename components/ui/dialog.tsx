@@ -22,6 +22,30 @@ interface DialogProps {
 }
 
 /**
+ * The control a pointer last pressed, and when. Safari doesn't focus buttons
+ * on click, so `document.activeElement` can't say which control opened a
+ * dialog there; a press just before opening can.
+ */
+let lastPressed: { el: HTMLElement; at: number } | null = null;
+if (typeof document !== "undefined") {
+  document.addEventListener(
+    "pointerdown",
+    (event) => {
+      const el = (event.target as Element | null)?.closest?.<HTMLElement>("button, a[href], [tabindex]");
+      lastPressed = el ? { el, at: Date.now() } : null;
+    },
+    true,
+  );
+}
+
+/** The control that opened a dialog: a fresh pointer press, else whatever has focus (keyboard). */
+function findOpener(): HTMLElement | null {
+  if (lastPressed && Date.now() - lastPressed.at < 1000 && lastPressed.el.isConnected) return lastPressed.el;
+  const active = document.activeElement;
+  return active instanceof HTMLElement && active !== document.body ? active : null;
+}
+
+/**
  * Modal built on the native <dialog> element, so the browser provides what is
  * hard to get right by hand: a real focus trap, an inert page behind it,
  * Escape to close, and focus restored to the trigger on close. Children are
@@ -29,11 +53,13 @@ interface DialogProps {
  */
 export function Dialog({ open, onClose, title, children, className, variant = "center" }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
     if (open && !dialog.open) {
+      opener.current = findOpener();
       dialog.showModal();
       const previous = document.body.style.overflow;
       document.body.style.overflow = "hidden";
@@ -48,7 +74,18 @@ export function Dialog({ open, onClose, title, children, className, variant = "c
     <dialog
       ref={ref}
       aria-label={title}
-      onClose={onClose}
+      onClose={(event) => {
+        // Chrome and Firefox hand focus back to the opener themselves.
+        // Safari leaves it inside the closed dialog, where it drops to
+        // <body> and a keyboard or screen-reader user is thrown back to the
+        // top of the page. Put it back on the opener in that case.
+        const target = opener.current;
+        opener.current = null;
+        const active = document.activeElement;
+        const lost = !active || active === document.body || event.currentTarget.contains(active);
+        if (lost && target?.isConnected) target.focus({ preventScroll: true });
+        onClose();
+      }}
       onClick={(event) => {
         // Clicks on the backdrop land on the <dialog> element itself.
         if (event.target === event.currentTarget) onClose();

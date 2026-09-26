@@ -11,9 +11,9 @@ import { navLinks } from "./content";
 const linkClass =
   "inline-flex min-h-11 items-center rounded-(--radius-md) px-3 text-[15px] font-medium hover:bg-(--color-mist-100)";
 
-function AccountLink({ isSignedIn, className }: { isSignedIn: boolean; className?: string }) {
+function AccountLink({ isSignedIn, className = "btn-ghost" }: { isSignedIn: boolean; className?: string }) {
   return (
-    <Link href={isSignedIn ? "/dashboard" : "/login"} className={`btn-ghost ${className ?? ""}`}>
+    <Link href={isSignedIn ? "/dashboard" : "/login"} className={className}>
       {isSignedIn ? "Dashboard" : "Sign in"}
     </Link>
   );
@@ -22,6 +22,7 @@ function AccountLink({ isSignedIn, className }: { isSignedIn: boolean; className
 export function MarketingHeader({ isSignedIn }: { isSignedIn: boolean }) {
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -33,22 +34,35 @@ export function MarketingHeader({ isSignedIn }: { isSignedIn: boolean }) {
         toggleRef.current?.focus();
       }
     }
+    // The menu drops down over the page: a tap on the page, or Tab moving
+    // focus past the last item, closes it rather than leaving it covering
+    // the content the user just reached for.
+    function onPointerDown(event: PointerEvent) {
+      if (!headerRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function onFocusIn(event: FocusEvent) {
+      if (!headerRef.current?.contains(event.target as Node)) setOpen(false);
+    }
     function onResize() {
       if (window.innerWidth >= 768) {
         setOpen(false);
       }
     }
     document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("focusin", onFocusIn);
     window.addEventListener("resize", onResize);
     return () => {
       document.body.style.overflow = prevOverflow;
       document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("focusin", onFocusIn);
       window.removeEventListener("resize", onResize);
     };
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-(--color-border) bg-(--color-paper)">
+    <header ref={headerRef} className="sticky top-0 z-40 border-b border-(--color-border) bg-(--color-paper)">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-50 focus:rounded-(--radius-md) focus:bg-black focus:px-4 focus:py-2 focus:text-white"
@@ -108,7 +122,7 @@ export function MarketingHeader({ isSignedIn }: { isSignedIn: boolean }) {
               </a>
             ))}
             <div className="mt-2 grid gap-2 border-t border-(--color-border) pt-3">
-              <AccountLink isSignedIn={isSignedIn} className="w-full border border-(--color-mist-300)" />
+              <AccountLink isSignedIn={isSignedIn} className="btn-outline w-full" />
               <CreateLinkCta className="w-full" onNavigate={() => setOpen(false)}>
                 Create a short link
               </CreateLinkCta>

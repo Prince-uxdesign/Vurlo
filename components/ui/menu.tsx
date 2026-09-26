@@ -2,6 +2,7 @@
 
 import { MoreHorizontal } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 
@@ -174,17 +175,32 @@ export function Menu({ label, items, className }: MenuProps) {
               return (
                 <div key={item.key} role="none">
                   {divider}
-                  <a
-                    ref={(n) => { itemRefs.current[i] = n; }}
-                    role="menuitem"
-                    tabIndex={-1}
-                    href={item.href}
-                    {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                    className={classes}
-                    onClick={() => close(false)}
-                  >
-                    {content}
-                  </a>
+                  {item.external ? (
+                    <a
+                      ref={(n) => { itemRefs.current[i] = n; }}
+                      role="menuitem"
+                      tabIndex={-1}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={classes}
+                      onClick={() => close(false)}
+                    >
+                      {content}
+                    </a>
+                  ) : (
+                    // In-app pages navigate client-side instead of reloading the app.
+                    <Link
+                      ref={(n) => { itemRefs.current[i] = n; }}
+                      role="menuitem"
+                      tabIndex={-1}
+                      href={item.href}
+                      className={classes}
+                      onClick={() => close(false)}
+                    >
+                      {content}
+                    </Link>
+                  )}
                 </div>
               );
             }

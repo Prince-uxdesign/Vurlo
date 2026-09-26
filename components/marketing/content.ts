@@ -105,7 +105,7 @@ export const faqs = [
   {
     question: "Can I change where a short link goes?",
     answer:
-      "Not yet. Editing destinations arrives with accounts, and the short URL will stay the same when it does.",
+      "Yes. Signed-in users can edit a link's destination from their links list, and the short URL stays the same. Changing a link's own address is possible too, up to a few times.",
   },
   {
     question: "Do short links expire?",
@@ -125,11 +125,22 @@ export const faqs = [
   {
     question: "Can I see how many people clicked?",
     answer:
-      "Yes. Your dashboard shows total clicks over time, plus country, device, browser, operating system and referrer.",
+      "Yes. Your dashboard shows total clicks over time, and each link has its own analytics: clicks, approximate unique visitors, and breakdowns by country, device, browser, operating system and referrer.",
   },
 ] as const;
 
-export const footerColumns = [
+interface FooterLink {
+  label: string;
+  /** null renders as "coming soon" text until the page exists. */
+  href: string | null;
+}
+
+interface FooterColumn {
+  heading: string;
+  links: FooterLink[];
+}
+
+export const footerColumns: FooterColumn[] = [
   {
     heading: "Product",
     links: [
@@ -141,10 +152,9 @@ export const footerColumns = [
   },
   {
     heading: "Legal",
-    // href: null renders as "coming soon" text until the pages exist.
     links: [
-      { label: "Privacy", href: null },
-      { label: "Terms", href: null },
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
     ],
   },
-] as const;
+];

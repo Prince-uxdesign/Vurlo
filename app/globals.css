@@ -83,7 +83,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  overflow-x: clip;
 }
 
 img,
@@ -175,16 +174,24 @@ video {
 
 /* ---------- Focus (never remove without replacement) ---------- */
 
-:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-  border-radius: 4px;
+/* Base layer: component classes (buttons, 10px radius) keep their own shape
+   when focused; bare links and controls get a softly rounded ring. */
+@layer base {
+  :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
 /* ---------- Buttons ----------
- * Only .btn-primary carries the glossy treatment (one per view).
- * Everything else stays flat so the CTA keeps its weight.
+ * In the components layer so Tailwind utilities on a button (w-full,
+ * min-h-12, border...) win over these defaults, as written. Unlayered, these
+ * rules silently beat every utility.
  */
+
+@layer components {
+
 
 .btn-primary {
   display: inline-flex;
@@ -326,11 +333,45 @@ video {
 }
 
 /* Tighter buttons for rows of equal-width actions. Declared after the
- * variants (same specificity) because utilities can't override them. */
+ * variants so it wins over their padding at the same specificity. */
 .btn-compact {
   padding-left: 12px;
   padding-right: 12px;
   gap: 6px;
+}
+
+/* ---------- Icon button (44px touch target) ---------- */
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  color: #000000;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.icon-btn:hover {
+  background: var(--color-mist-100);
+}
+
+.icon-btn:active {
+  background: var(--color-mist-300);
+}
+
+.icon-btn:disabled {
+  color: var(--color-stone-500);
+  cursor: not-allowed;
+}
+
+.icon-btn-bordered {
+  border: 1px solid var(--color-mist-300);
+  background: #ffffff;
+}
 }
 
 /* ---------- Inputs ---------- */
@@ -440,39 +481,6 @@ video {
   line-height: 1.5;
   font-weight: 500;
   color: var(--color-danger-700);
-}
-
-/* ---------- Icon button (44px touch target) ---------- */
-
-.icon-btn {
-  display: inline-grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  color: #000000;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background 120ms ease;
-}
-
-.icon-btn:hover {
-  background: var(--color-mist-100);
-}
-
-.icon-btn:active {
-  background: var(--color-mist-300);
-}
-
-.icon-btn:disabled {
-  color: var(--color-stone-500);
-  cursor: not-allowed;
-}
-
-.icon-btn-bordered {
-  border: 1px solid var(--color-mist-300);
-  background: #ffffff;
 }
 
 /* ---------- Spinner ---------- */

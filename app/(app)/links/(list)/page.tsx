@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { LinksResults } from "@/components/links/links-results";
 import { LinksWorkspace } from "@/components/links/links-workspace";
 import { ListSkeleton } from "@/components/links/skeletons";
-import { ResultsError } from "@/components/links/states";
+import { EmptyWorkspace, ResultsError } from "@/components/links/states";
 import { UsageMeter } from "@/components/links/usage-meter";
 import { requireUser } from "@/lib/auth/session";
 import { parseLinkListParams } from "@/lib/links/list-params";
@@ -31,19 +31,27 @@ export default async function LinksPage({
     logServerError("links_stats_failed", error);
   }
 
+  // A brand-new account gets the empty state's single call to action, not a
+  // second primary button above it and search/filters with nothing to find.
+  const isEmpty = stats?.total === 0;
+
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <h1 className="text-[30px] font-bold leading-tight tracking-tight md:text-[38px]">Links</h1>
-        <Link href="/dashboard#shorten" className="btn-primary">
-          Create link
-        </Link>
+        {isEmpty ? null : (
+          <Link href="/dashboard#shorten" className="btn-primary">
+            Create link
+          </Link>
+        )}
       </div>
 
       {stats ? <div className="mt-5"><UsageMeter active={stats.active} /></div> : null}
 
       <div className="mt-5">
-        {stats ? (
+        {isEmpty ? (
+          <EmptyWorkspace />
+        ) : stats ? (
           <LinksWorkspace params={params} stats={stats}>
             {/* Keyed by the query so a change shows the skeleton in the same layout. */}
             <Suspense key={JSON.stringify(params)} fallback={<ListSkeleton />}>

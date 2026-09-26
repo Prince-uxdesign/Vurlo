@@ -99,7 +99,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <IconButton
                 aria-label={`Dismiss: ${toast.title}`}
                 onClick={() => dismiss(toast.id)}
-                className="h-8 w-8"
               >
                 <X size={16} aria-hidden="true" />
               </IconButton>

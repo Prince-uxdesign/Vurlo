@@ -14,19 +14,27 @@ interface ShortenerResultProps {
   onReset: () => void;
 }
 
+/**
+ * Same day-month-year order as the rest of the app ("26 Oct 2026"), plus the
+ * time in the visitor's own zone: this renders only in the browser, and the
+ * exact moment matters for a link that expires within days.
+ */
+const expiryFormat = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 function formatExpiry(iso: string | null): string {
   if (!iso) return "Never expires";
-  const date = new Date(iso);
-  const formatted = new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-  return `Expires ${formatted}`;
+  return `Expires ${expiryFormat.format(new Date(iso))}`;
 }
 
 /**
- * Success state: copy, open, QR code, and create another. Analytics is a
- * later phase, so nothing here pretends to offer it.
+ * Success state: copy, open, QR code, and create another. Analytics lives
+ * in the signed-in dashboard, so nothing here pretends to offer it.
  */
 export function ShortenerResult({ link, onReset }: ShortenerResultProps) {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
