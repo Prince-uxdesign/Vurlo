@@ -48,8 +48,29 @@ export function sanitizeError(error: unknown, depth = 0): Record<string, unknown
   return { message: redact(String(error)) };
 }
 
+function notifyAlertWebhook(payload: Record<string, unknown>) {
+  const webhookUrl = process.env.ALERT_WEBHOOK_URL;
+  if (!webhookUrl) return;
+
+  try {
+    fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: `🚨 **[Vurlo Server Error]** \`${String(payload.event)}\`: ${JSON.stringify(payload.error)}`,
+        text: `[Vurlo Server Error] ${String(payload.event)}: ${JSON.stringify(payload.error)}`,
+        ...payload,
+      }),
+    }).catch(() => undefined);
+  } catch {
+    // Ignore webhook network failures so logging never throws
+  }
+}
+
 export function logServerError(event: string, error: unknown, context: Record<string, unknown> = {}) {
-  console.error(JSON.stringify({ level: "error", event, ...context, error: sanitizeError(error) }));
+  const payload = { level: "error", event, ...context, error: sanitizeError(error) };
+  console.error(JSON.stringify(payload));
+  notifyAlertWebhook(payload);
 }
 
 /**
@@ -61,3 +82,4 @@ export function logServerError(event: string, error: unknown, context: Record<st
 export function logSecurityEvent(event: string, context: Record<string, unknown> = {}) {
   console.warn(JSON.stringify({ level: "warn", kind: "security", event, ...context }));
 }
+

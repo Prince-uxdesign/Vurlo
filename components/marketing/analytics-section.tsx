@@ -1,3 +1,4 @@
+import { siteConfig } from "@/config/site";
 import { Container } from "@/components/ui/container";
 import { cn } from "@/lib/utils/cn";
 import { SectionHeading } from "./section-heading";
@@ -54,7 +55,7 @@ export function AnalyticsSection() {
         <figure className="mt-10 overflow-hidden rounded-(--radius-lg) bg-white text-(--color-ink-900)">
           <figcaption className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-(--color-border) px-4 py-3 md:px-6">
             <span className="font-mono text-[14px] font-semibold">
-              vurlo.link/launch-night
+              {siteConfig.shortLinkHost}/launch-night
             </span>
             <span className="text-small text-(--color-muted)">
               Last 30 days · Sample data for illustration

@@ -1,4 +1,7 @@
+import { siteConfig } from "@/config/site";
+
 /** Static marketing copy. Plain data — no CMS, no database. */
+const host = siteConfig.shortLinkHost;
 
 export const navLinks = [
   { label: "Features", href: "#features" },
@@ -34,32 +37,32 @@ export const useCases = [
   {
     title: "Creators",
     body: "Share cleaner links across social platforms and bios.",
-    example: "vurlo.link/new-video",
+    example: `${host}/new-video`,
   },
   {
     title: "Freelancers",
     body: "Send portfolio and project links that look considered.",
-    example: "vurlo.link/portfolio",
+    example: `${host}/portfolio`,
   },
   {
     title: "Small businesses",
     body: "Use short links in flyers, packaging, and campaigns.",
-    example: "vurlo.link/menu",
+    example: `${host}/menu`,
   },
   {
     title: "Event organizers",
     body: "Put a short link and QR code on every poster.",
-    example: "vurlo.link/rsvp",
+    example: `${host}/rsvp`,
   },
   {
     title: "Marketers",
     body: "Tag campaign links with UTM parameters and track the traffic.",
-    example: "vurlo.link/spring",
+    example: `${host}/spring`,
   },
   {
     title: "Developers",
     body: "Share compact URLs for docs, repos, and issue threads.",
-    example: "vurlo.link/api-docs",
+    example: `${host}/api-docs`,
   },
 ] as const;
 
@@ -100,7 +103,7 @@ export const faqs = [
   {
     question: "Can I customize my short URL?",
     answer:
-      "Yes. Pick your own alias, such as vurlo.link/summer, as long as it isn't already taken.",
+      `Yes. Pick your own alias, such as ${host}/summer, as long as it isn't already taken.`,
   },
   {
     question: "Can I change where a short link goes?",

@@ -64,18 +64,21 @@ function Toolbar({
   const lastSent = useRef(params.q);
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  const latestRef = useRef({ params, navigate });
+  useEffect(() => {
+    latestRef.current = { params, navigate };
+  });
+
   // Debounced search → URL. Fires only when the input value changes, debounced.
-  // params and navigate are omitted from deps intentionally so external parameter
-  // updates (e.g. filter/sort) do not inadvertently reset or trigger this search timer.
   useEffect(() => {
     if (value.trim() === params.q) return;
     const t = setTimeout(() => {
       lastSent.current = value.trim();
-      navigate(buildLinksHref(params, { q: value.trim() }), true);
+      const { params: currentParams, navigate: currentNavigate } = latestRef.current;
+      currentNavigate(buildLinksHref(currentParams, { q: value.trim() }), true);
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  }, [value, params.q]);
 
   // Follow external changes (e.g. "Clear filters", back button) without
   // clobbering what the user is typing.

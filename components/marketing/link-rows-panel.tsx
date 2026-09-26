@@ -1,30 +1,33 @@
 import { CircleCheck, Clock, Pause } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { siteConfig } from "@/config/site";
+
+const host = siteConfig.shortLinkHost;
 
 const rows = [
   {
-    short: "vurlo.link/spring-menu",
+    short: `${host}/spring-menu`,
     destination: "example.com/menus/spring-2026-dinner-and-drinks",
     clicks: "312",
     status: "Active",
     Icon: CircleCheck,
   },
   {
-    short: "vurlo.link/rsvp",
+    short: `${host}/rsvp`,
     destination: "example.com/events/launch-night/register",
     clicks: "1,048",
     status: "Active",
     Icon: CircleCheck,
   },
   {
-    short: "vurlo.link/early-bird",
+    short: `${host}/early-bird`,
     destination: "example.com/tickets?promo=early-bird",
     clicks: "96",
     status: "Expired",
     Icon: Clock,
   },
   {
-    short: "vurlo.link/old-deck",
+    short: `${host}/old-deck`,
     destination: "example.com/press/deck-v2.pdf",
     clicks: "41",
     status: "Paused",

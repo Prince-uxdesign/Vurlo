@@ -214,3 +214,52 @@ export async function signOutEverywhere(): Promise<void> {
   revalidatePath("/", "layout");
   redirect("/");
 }
+
+/**
+ * Permanently deletes the account and all associated data (links, click events,
+ * profile). Requires password confirmation if password-based, or confirmation text.
+ */
+export async function deleteAccountAction(_prev: SettingsFormState, formData: FormData): Promise<SettingsFormState> {
+  const user = await requireSettingsUser("/settings/account");
+  const methods = signInMethods(user);
+
+  if (methods.password && user.email) {
+    const password = text(formData, "confirm_password");
+    if (!password) {
+      return { status: "error", fieldErrors: { confirm_password: "Enter your password to confirm." } };
+    }
+    const check = await verifyCurrentPassword(user.email, password);
+    if (check !== "ok") {
+      if (typeof check === "object") return tooMany(check.wait);
+      if (check === "wrong") return { status: "error", fieldErrors: { confirm_password: "That password isn't right." } };
+      return { status: "error", message: AUTH_MESSAGES.unavailable };
+    }
+  } else {
+    const confirmation = text(formData, "confirmation_text").trim();
+    if (confirmation !== "DELETE" && confirmation !== user.email) {
+      return { status: "error", fieldErrors: { confirmation_text: "Type DELETE to confirm." } };
+    }
+  }
+
+  const admin = createAdminClient();
+  if (!admin) {
+    return { status: "error", message: "Account deletion is temporarily unavailable. Please try again later." };
+  }
+
+  const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
+  if (deleteError) {
+    logServerError("delete_account_failed", deleteError, { userId: user.id });
+    return { status: "error", message: "Failed to delete account. Please try again." };
+  }
+
+  logSecurityEvent("account_deleted", { userId: user.id });
+
+  const supabase = await createClient();
+  if (supabase) {
+    await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+  }
+
+  revalidatePath("/", "layout");
+  redirect("/?notice=account-deleted");
+}
+

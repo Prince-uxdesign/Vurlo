@@ -5,7 +5,7 @@ import { useActionState, useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { signOut } from "@/app/(auth)/actions";
-import { changeEmail, changePassword, savePreferences, signOutEverywhere } from "@/app/(app)/settings/actions";
+import { changeEmail, changePassword, deleteAccountAction, savePreferences, signOutEverywhere } from "@/app/(app)/settings/actions";
 import type { SettingsFormState } from "@/app/(app)/settings/actions";
 import { EmailField, FieldMessage, FormAlert, PasswordField } from "@/components/auth/form-parts";
 import { useFocusFirstError } from "@/components/auth/use-focus-first-error";
@@ -230,3 +230,89 @@ function ConfirmSubmit() {
     </Button>
   );
 }
+
+export function DeleteAccountForm({ hasPassword }: { hasPassword: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [state, action] = useActionState(offlineSafe(deleteAccountAction), initial);
+  const formRef = useFocusFirstError(state);
+
+  return (
+    <div>
+      <Button
+        type="button"
+        variant="destructive"
+        onClick={() => setOpen(true)}
+      >
+        Delete account
+      </Button>
+
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Delete account?"
+        variant="sheet"
+      >
+        <h2 className="text-h3 text-(--color-danger-700)">Delete account?</h2>
+        <p className="mt-2 text-(--color-muted)">
+          This action is permanent. All your short links will stop redirecting immediately, and your click statistics and profile will be deleted forever.
+        </p>
+
+        <form ref={formRef} action={action} className="mt-6 grid gap-4">
+          <FormAlert message={state.message} />
+
+          {hasPassword ? (
+            <PasswordField
+              id="delete-account-password"
+              name="confirm_password"
+              label="Enter your password to confirm"
+              error={state.fieldErrors?.confirm_password}
+              autoComplete="current-password"
+            />
+          ) : (
+            <div>
+              <label htmlFor="delete-account-confirmation" className="text-small font-semibold">
+                Type <span className="font-mono text-red-600">DELETE</span> to confirm
+              </label>
+              <input
+                id="delete-account-confirmation"
+                name="confirmation_text"
+                type="text"
+                required
+                placeholder="DELETE"
+                className="input mt-1.5 w-full"
+              />
+              <FieldMessage id="delete-confirm-error" message={state.fieldErrors?.confirmation_text} />
+            </div>
+          )}
+
+          <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <DeleteSubmit />
+          </div>
+        </form>
+      </Dialog>
+    </div>
+  );
+}
+
+function DeleteSubmit() {
+  const { pending } = useFormStatus();
+  return (
+    <Button
+      type="submit"
+      variant="destructive"
+      loading={pending}
+      className="w-full sm:w-auto"
+    >
+      Permanently delete account
+    </Button>
+  );
+}
+

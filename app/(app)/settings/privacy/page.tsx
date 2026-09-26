@@ -75,8 +75,9 @@ export default async function PrivacySettingsPage() {
 
         <SettingsCard id="account-deletion" title="Deleting your account">
           <p className="text-[15px]">
-            Deleting an account isn&apos;t available in Vurlo yet. Until it is, you can delete any of your links from{" "}
-            <Link href="/links" className="font-semibold underline underline-offset-2">your links</Link>: they stop working straight away.
+            You can delete your account at any time from{" "}
+            <Link href="/settings/account" className="font-semibold underline underline-offset-2">your account settings</Link>.
+            Deleting your account immediately stops all your short links from working and permanently deletes your profile and click data.
           </p>
         </SettingsCard>
       </div>

@@ -36,8 +36,9 @@ export default function PrivacyPage() {
         <P>
           If you create an account, we store your email address, when you joined, and
           how you sign in. Passwords are handled by our sign-in provider and stored
-          only as a secure hash. Account deletion is not self-serve yet; until it is,
-          you can delete any of your links at any time and they stop working immediately.
+          only as a secure hash. You can delete your account at any time from your
+          Account settings; deleting your account immediately stops all your short links
+          from working and permanently deletes your profile and click data.
         </P>
 
         <H>Link data</H>

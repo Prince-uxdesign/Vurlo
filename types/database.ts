@@ -124,6 +124,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      purge_expired_link_events: {
+        Args: { p_days?: number };
+        Returns: number;
+      };
       active_link_limit: {
         Args: Record<string, never>;
         Returns: number;

@@ -1,6 +1,7 @@
 import { Download, Share2, FileImage, FileCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { siteConfig } from "@/config/site";
 import { SectionHeading } from "./section-heading";
 
 const GRID = 25;
@@ -72,7 +73,7 @@ export function QrSection() {
 
         <figure className="m-0 mx-auto w-full max-w-md overflow-hidden rounded-(--radius-lg) border border-(--color-ink-900) bg-white">
           <figcaption className="flex items-center justify-between gap-3 border-b border-(--color-border) px-4 py-3">
-            <span className="font-mono text-[14px] font-semibold">vurlo.link/menu</span>
+            <span className="font-mono text-[14px] font-semibold">{siteConfig.shortLinkHost}/menu</span>
             <span className="text-small text-(--color-muted)">Preview</span>
           </figcaption>
           <div className="p-5 sm:p-6">

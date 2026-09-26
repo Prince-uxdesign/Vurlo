@@ -19,6 +19,7 @@ import { EmptyState, ErrorState, LoadingSkeleton, LoadingState } from "@/compone
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { Tooltip } from "@/components/ui/tooltip";
+import { siteConfig } from "@/config/site";
 import { MarketingNav } from "@/components/layout/marketing-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
 
@@ -78,7 +79,7 @@ export default function ShowcasePage() {
               <p className="text-body">Body — default UI text.</p>
               <p className="text-small">Small — meta text and captions.</p>
               <p className="text-label">Label — sentence case, never caps</p>
-              <p className="text-mono">vurlo.link/a1b2c3</p>
+              <p className="text-mono">{siteConfig.shortLinkHost}/a1b2c3</p>
             </div>
           </ShowcaseSection>
 
@@ -135,8 +136,8 @@ export default function ShowcasePage() {
                 <Input placeholder="my-launch" autoComplete="off" />
               </Field>
               <Field id="show-domain" label="Domain">
-                <Select defaultValue="vurlo.link">
-                  <option value="vurlo.link">vurlo.link</option>
+                <Select defaultValue={siteConfig.shortLinkHost}>
+                  <option value={siteConfig.shortLinkHost}>{siteConfig.shortLinkHost}</option>
                   <option value="go.example.com">go.example.com</option>
                 </Select>
               </Field>
@@ -170,7 +171,7 @@ export default function ShowcasePage() {
               </Card>
               <Card>
                 <h3 className="text-h3">Short link</h3>
-                <p className="text-mono mt-1">vurlo.link/a1b2c3</p>
+                <p className="text-mono mt-1">{siteConfig.shortLinkHost}/a1b2c3</p>
               </Card>
             </div>
           </ShowcaseSection>
@@ -236,7 +237,7 @@ export default function ShowcasePage() {
                 onClick={() =>
                   notify({
                     title: "Link created",
-                    description: "vurlo.link/a1b2c3 is ready to share.",
+                    description: `${siteConfig.shortLinkHost}/a1b2c3 is ready to share.`,
                     tone: "success",
                   })
                 }

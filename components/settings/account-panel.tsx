@@ -3,7 +3,7 @@ import Link from "next/link";
 import { UsageMeter } from "@/components/links/usage-meter";
 import type { SettingsProfile, SignInMethods } from "@/lib/settings/account";
 import type { LinkStats } from "@/lib/links/workspace-types";
-import { EmailChangeForm } from "./settings-forms";
+import { DeleteAccountForm, EmailChangeForm } from "./settings-forms";
 import { SettingsCard, SettingsHeader, SettingsNotice } from "./settings-shell";
 
 const longDate = new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeZone: "UTC" });
@@ -81,6 +81,13 @@ export function AccountPanel({
           ) : (
             <p className="text-[14px] text-(--color-muted)">Link usage couldn&apos;t load right now. Your links still work.</p>
           )}
+        </SettingsCard>
+
+        <SettingsCard id="danger-title" title="Delete account" description="Permanently delete your account and all associated links.">
+          <p className="mb-4 text-[14px] text-(--color-muted)">
+            Once deleted, all your short links will stop redirecting immediately and your account cannot be recovered.
+          </p>
+          <DeleteAccountForm hasPassword={Boolean(methods.password)} />
         </SettingsCard>
       </div>
     </>
