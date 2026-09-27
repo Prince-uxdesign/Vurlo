@@ -39,7 +39,7 @@ export function Hero({ isSignedIn = false, defaultExpiration }: HeroProps) {
             </p>
 
             {/* URL Shortener Widget */}
-            <div className="mt-8">
+            <div id="shorten" className="mt-8 scroll-mt-20">
               <ShortenerWidget
                 isSignedIn={isSignedIn}
                 defaultExpiration={defaultExpiration}

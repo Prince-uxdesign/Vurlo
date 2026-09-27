@@ -340,7 +340,7 @@ export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = 
             <UtmFields
               idPrefix="shortener"
               panelId="shortener-utm"
-              className="mt-2 border-t border-(--color-border) pt-5"
+              className="mt-2 border-t border-(--color-mist-300) pt-5"
               utm={utm}
               errors={errors.utmFields ?? {}}
               formError={errors.utm}
@@ -359,7 +359,7 @@ export function ShortenerWidget({ isSignedIn = false, onCreated, limitReached = 
           ) : null}
         </div>
 
-        <p className="text-small mt-4 border-t border-(--color-border) pt-4 text-(--color-muted)">
+        <p className="text-small mt-4 border-t border-(--color-mist-300) pt-4 text-(--color-slate-700)">
           {isSignedIn
             ? "Saved to your account. "
             : "No account needed. "}

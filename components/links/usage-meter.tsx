@@ -16,7 +16,7 @@ export function UsageMeter({ active }: { active: number }) {
   return (
     <section
       aria-labelledby="usage-meter-title"
-      className="grid gap-x-5 gap-y-2 rounded-(--radius-lg) border border-(--color-border) bg-white px-4 py-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:px-5"
+      className="grid gap-x-5 gap-y-2 rounded-(--radius-lg) border border-(--color-mist-300) bg-white px-4 py-3 shadow-2xs sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:px-5"
     >
       <h2 id="usage-meter-title" className="flex items-baseline gap-2 text-[15px]">
         <span className="font-semibold">Active links</span>

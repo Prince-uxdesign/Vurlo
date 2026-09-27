@@ -152,7 +152,7 @@ export function PreferencesForm({ current }: { current: ExpirationOption }) {
                 key={option.value}
                 className={cn(
                   "flex min-h-14 cursor-pointer items-start gap-3 rounded-(--radius-md) border p-3",
-                  value === option.value ? "border-(--color-ink-900) bg-(--color-mist-100)" : "border-(--color-border) bg-white hover:border-(--color-ink-900)",
+                  value === option.value ? "border-(--color-ink-900) bg-(--color-mist-100)" : "border-(--color-mist-300) bg-white hover:border-(--color-ink-900)",
                 )}
               >
                 <input
@@ -198,7 +198,7 @@ export function SignOutControls() {
           </Button>
         </form>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-(--color-border) pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-(--color-mist-300) pt-4">
         <p className="min-w-0 flex-[1_1_16rem] text-[14px] text-(--color-muted)">
           Lost a device, or signed in somewhere you shouldn&apos;t have? End every session, including this one.
         </p>

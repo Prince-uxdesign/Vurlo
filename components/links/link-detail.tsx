@@ -63,7 +63,7 @@ export function LinkIdentity({ link, displayUrl, now }: { link: LinkListItem; di
 
 function Notice({ icon: Icon, children, action }: { icon: LucideIcon; children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-(--radius-lg) border border-(--color-border) bg-(--color-mist-100) px-4 py-3 sm:px-5">
+    <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-(--radius-lg) border border-(--color-mist-300) bg-(--color-mist-100) px-4 py-3 sm:px-5">
       <Icon size={20} aria-hidden="true" className="flex-none" />
       <p className="min-w-0 flex-[1_1_16rem]">{children}</p>
       {action ? <div className="flex-none">{action}</div> : null}
@@ -138,7 +138,7 @@ export function LinkSettings({ link, displayUrl, now }: { link: LinkListItem; di
         <h2 id="settings-title" className="text-h3">Link settings</h2>
         <EditLinkButton className="btn-compact">Edit</EditLinkButton>
       </div>
-      <dl className="grid gap-x-8 gap-y-4 border-t border-(--color-border) p-4 sm:px-5 @xl:grid-cols-2">
+      <dl className="grid gap-x-8 gap-y-4 border-t border-(--color-mist-300) p-4 sm:px-5 @xl:grid-cols-2">
         <Row term="Short link">
           <span className="break-all font-mono text-[15px] font-semibold">{displayUrl}</span>
           <span className="text-small block text-(--color-muted)">{link.isCustomAlias ? "Custom alias" : "Generated address"}</span>
@@ -185,7 +185,7 @@ export function LinkSettings({ link, displayUrl, now }: { link: LinkListItem; di
           <time dateTime={link.updatedAt} title={formatDate(link.updatedAt)}>{formatRelative(link.updatedAt, now)}</time>
         </Row>
       </dl>
-      <div className="border-t border-(--color-border) p-4 sm:px-5">
+      <div className="border-t border-(--color-mist-300) p-4 sm:px-5">
         <QrButton className="btn-compact w-full @sm:w-auto" />
       </div>
     </section>

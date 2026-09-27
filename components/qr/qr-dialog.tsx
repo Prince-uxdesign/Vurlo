@@ -227,7 +227,7 @@ function QrContent({ slug, shortUrl, displayUrl, status, onClose }: Omit<QrDialo
       ) : (
         <div className="grid grid-cols-[minmax(0,1fr)] gap-6 min-[600px]:grid-cols-[15rem_minmax(0,1fr)] min-[600px]:items-center min-[600px]:gap-8">
           <figure className="mx-auto w-full max-w-[18rem] min-[600px]:max-w-none">
-            <div className="overflow-hidden rounded-(--radius-lg) border border-(--color-border) bg-white">
+            <div className="overflow-hidden rounded-(--radius-lg) border border-(--color-mist-300) bg-white p-2">
               {ready ? (
                 <svg
                   viewBox={`0 0 ${ready.code.size} ${ready.code.size}`}
@@ -253,13 +253,13 @@ function QrContent({ slug, shortUrl, displayUrl, status, onClose }: Omit<QrDialo
               <p ref={urlRef} className="mt-0.5 break-all font-mono text-[16px] font-semibold leading-snug">{displayUrl}</p>
             </div>
             {offState ? (
-              <p className="text-small flex items-start gap-2 rounded-(--radius-md) border border-(--color-border) bg-(--color-mist-100) p-3">
+              <p className="text-small flex items-start gap-2 rounded-(--radius-md) border border-(--color-mist-300) bg-(--color-mist-100) p-3">
                 <Info size={16} aria-hidden="true" className="mt-0.5 flex-none" />
                 <span>{offState}</span>
               </p>
             ) : null}
             {local ? (
-              <p className="text-small flex items-start gap-2 rounded-(--radius-md) border border-(--color-border) bg-(--color-mist-100) p-3">
+              <p className="text-small flex items-start gap-2 rounded-(--radius-md) border border-(--color-mist-300) bg-(--color-mist-100) p-3">
                 <Info size={16} aria-hidden="true" className="mt-0.5 flex-none" />
                 <span>This is a local development address, so the code only works on this computer.</span>
               </p>

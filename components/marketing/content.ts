@@ -147,10 +147,10 @@ export const footerColumns: FooterColumn[] = [
   {
     heading: "Product",
     links: [
-      { label: "Features", href: "#features" },
-      { label: "Analytics", href: "#analytics" },
-      { label: "QR codes", href: "#qr-codes" },
-      { label: "FAQ", href: "#faq" },
+      { label: "Features", href: "/#features" },
+      { label: "Analytics", href: "/#analytics" },
+      { label: "QR codes", href: "/#qr-codes" },
+      { label: "FAQ", href: "/#faq" },
     ],
   },
   {

@@ -29,14 +29,14 @@ export async function RecentActivity({ client }: { client: RpcClient }) {
   const now = new Date();
 
   return (
-    <section aria-labelledby="activity-title" className="rounded-(--radius-lg) border border-(--color-border) bg-white">
+    <section aria-labelledby="activity-title" className="rounded-(--radius-lg) border border-(--color-mist-300) bg-white shadow-2xs">
       <div className="p-4 sm:p-5">
         <h2 id="activity-title" className="text-h3">Recent activity</h2>
       </div>
       {items.length === 0 ? (
-        <p className="border-t border-(--color-border) p-4 text-(--color-muted) sm:p-5">Nothing yet. Activity appears once you create a link.</p>
+        <p className="border-t border-(--color-mist-300) p-4 text-(--color-muted) sm:p-5">Nothing yet. Activity appears once you create a link.</p>
       ) : (
-        <ul className="divide-y divide-(--color-border) border-t border-(--color-border)">
+        <ul className="divide-y divide-(--color-mist-300) border-t border-(--color-mist-300)">
           {items.map((item) => {
             const Icon = ICONS[item.kind];
             return (

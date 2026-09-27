@@ -31,11 +31,11 @@ export async function NeedsAttention({ supabase, stats }: { supabase: UserClient
   const now = new Date();
 
   return (
-    <section aria-labelledby="attention-title" className="rounded-(--radius-lg) border border-(--color-border) bg-white">
+    <section aria-labelledby="attention-title" className="rounded-(--radius-lg) border border-(--color-mist-300) bg-white shadow-2xs">
       <div className="p-4 sm:p-5">
         <h2 id="attention-title" className="text-h3">Needs attention</h2>
       </div>
-      <ul className="divide-y divide-(--color-border) border-t border-(--color-border)">
+      <ul className="divide-y divide-(--color-mist-300) border-t border-(--color-mist-300)">
         {expiring.map((link) => (
           <li key={link.id}>
             <Link href={`/links/${link.id}`} className="flex min-h-14 items-center gap-3 px-4 py-2 hover:bg-(--color-mist-100) sm:px-5">

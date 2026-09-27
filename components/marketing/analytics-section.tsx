@@ -85,7 +85,7 @@ export function AnalyticsSection() {
           {/* Deconstructed Interface Canvas */}
           <figure className="mt-10 overflow-hidden rounded-[18px] border border-(--color-ink-900) bg-white text-(--color-ink-900) shadow-[6px_6px_0_#000]">
             {/* Header bar */}
-            <figcaption className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-(--color-border) bg-(--color-mist-100) px-4 py-3 sm:px-6">
+            <figcaption className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-(--color-mist-300) bg-(--color-mist-100) px-4 py-3 sm:px-6">
               <div className="flex items-center gap-2">
                 <span className="size-2.5 rounded-full bg-(--color-success-700)" />
                 <span className="font-mono text-[14px] font-bold text-(--color-ink-900)">
@@ -99,7 +99,7 @@ export function AnalyticsSection() {
 
             <div className="p-5 sm:p-7 md:p-8">
               {/* Primary Key Metric Tiles */}
-              <div className="grid grid-cols-2 gap-4 border-b border-(--color-border) pb-7 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 border-b border-(--color-mist-300) pb-7 sm:grid-cols-4">
                 <div>
                   <p className="text-[12px] font-medium text-(--color-slate-700)">
                     Total human clicks
@@ -169,7 +169,7 @@ export function AnalyticsSection() {
               </div>
 
               {/* Real Metric Breakdowns */}
-              <div className="mt-10 grid gap-6 border-t border-(--color-border) pt-8 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-10 grid gap-6 border-t border-(--color-mist-300) pt-8 sm:grid-cols-2 lg:grid-cols-4">
                 {breakdowns.map((group) => {
                   const Icon = group.icon;
                   return (
@@ -211,7 +211,7 @@ export function AnalyticsSection() {
               </div>
 
               {/* Privacy statement footer */}
-              <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-(--color-border) pt-4 text-[12px] text-(--color-slate-700)">
+              <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-(--color-mist-300) pt-4 text-[12px] text-(--color-slate-700)">
                 <div className="flex items-center gap-2">
                   <ShieldCheck size={16} className="text-(--color-success-700)" />
                   <span>

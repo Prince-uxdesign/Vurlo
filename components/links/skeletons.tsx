@@ -44,7 +44,7 @@ export function UsageMeterSkeleton() {
   return (
     <div
       aria-hidden="true"
-      className="grid gap-x-5 gap-y-2 rounded-(--radius-lg) border border-(--color-border) bg-white px-4 py-3 text-transparent select-none sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:px-5"
+      className="grid gap-x-5 gap-y-2 rounded-(--radius-lg) border border-(--color-mist-300) bg-white px-4 py-3 text-transparent select-none sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:px-5"
     >
       <p className="text-[15px]"><span className="skeleton font-semibold">Active links 00/50</span></p>
       <div className="skeleton h-2 rounded-full" />

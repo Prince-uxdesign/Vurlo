@@ -165,7 +165,7 @@ function Toolbar({
                   onClick={() => navigate(buildLinksHref(params, { filter: f }))}
                   className={cn(
                     "inline-flex min-h-11 items-center gap-2 rounded-(--radius-md) border px-4 text-[14px] font-semibold",
-                    current ? "border-(--color-ink-900) bg-(--color-ink-900) text-white" : "border-(--color-border) bg-white hover:border-(--color-ink-900)",
+                    current ? "border-(--color-ink-900) bg-(--color-ink-900) text-white" : "border-(--color-mist-300) bg-white hover:border-(--color-ink-900)",
                   )}
                 >
                   {FILTER_LABELS[f]}
@@ -198,7 +198,7 @@ function SheetBody({ params, stats, onApply, onClose }: { params: LinkListParams
   const [filter, setFilter] = useState(params.filter);
   const [sort, setSort] = useState(params.sort);
   const radio = (name: string, value: string, label: string, checked: boolean, onChange: () => void, count?: number) => (
-    <label key={value} className={cn("flex min-h-12 cursor-pointer items-center gap-3 rounded-(--radius-md) border px-3 text-[15px] font-medium", checked ? "border-(--color-ink-900) bg-(--color-mist-100)" : "border-(--color-border)")}>
+    <label key={value} className={cn("flex min-h-12 cursor-pointer items-center gap-3 rounded-(--radius-md) border px-3 text-[15px] font-medium", checked ? "border-(--color-ink-900) bg-(--color-mist-100)" : "border-(--color-mist-300)")}>
       <input type="radio" name={name} value={value} checked={checked} onChange={onChange} className="size-5 accent-black" />
       <span className="flex-1">{label}</span>
       {count !== undefined ? <span className="font-mono text-[13px] text-(--color-muted)">{count}</span> : null}

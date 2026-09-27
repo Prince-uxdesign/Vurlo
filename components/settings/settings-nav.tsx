@@ -28,7 +28,7 @@ export function SettingsNav() {
   const isCurrent = useCurrent();
   return (
     <nav aria-label="Settings" className="hidden min-[600px]:block">
-      <ul className="flex gap-1 border-b border-(--color-border) lg:flex-col lg:gap-0.5 lg:border-b-0">
+      <ul className="flex gap-1 border-b border-(--color-mist-300) lg:flex-col lg:gap-0.5 lg:border-b-0">
         {SETTINGS_SECTIONS.map(({ href, label, Icon }) => {
           const current = isCurrent(href);
           return (
@@ -59,7 +59,7 @@ export function SettingsNav() {
 export function SettingsSectionList() {
   return (
     <nav aria-label="Settings sections">
-      <ul className="divide-y divide-(--color-border) rounded-(--radius-lg) border border-(--color-border) bg-white">
+      <ul className="divide-y divide-(--color-mist-300) rounded-(--radius-lg) border border-(--color-mist-300) bg-white shadow-2xs">
         {SETTINGS_SECTIONS.map(({ href, label, description, Icon }) => (
           <li key={href}>
             <Link href={href} className="flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-(--color-mist-100)">

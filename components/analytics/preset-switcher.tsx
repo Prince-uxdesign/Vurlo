@@ -19,7 +19,7 @@ export const PRESET_LABELS: Record<AnalyticsPreset, string> = {
 export function PresetSwitcher({ linkId, preset }: { linkId: string; preset: AnalyticsPreset }) {
   return (
     <nav aria-label="Analytics time range">
-      <ul className="grid grid-cols-4 rounded-(--radius-md) border border-(--color-border) bg-(--color-surface) p-1 sm:inline-grid">
+      <ul className="grid grid-cols-4 rounded-(--radius-md) border border-(--color-mist-300) bg-white p-1 sm:inline-grid">
         {ANALYTICS_PRESETS.map((p) => {
           const active = p === preset;
           return (

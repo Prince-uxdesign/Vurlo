@@ -137,7 +137,7 @@ export function TrendChart({ points, bucket, title = "Clicks over time", windowe
           <div className="relative h-36 sm:h-44 lg:h-52">
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex flex-col justify-between">
               {[0, 1, 2].map((i) => (
-                <div key={i} className={cn("border-t", i === 2 ? "border-(--color-mist-300)" : "border-dashed border-(--color-border)")} />
+                <div key={i} className={cn("border-t", i === 2 ? "border-(--color-mist-300)" : "border-dashed border-(--color-mist-300)")} />
               ))}
             </div>
             <div

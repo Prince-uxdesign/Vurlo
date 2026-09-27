@@ -94,7 +94,7 @@ export function Dialog({ open, onClose, title, children, className, variant = "c
         "dialog",
         variant === "sheet" && "dialog-sheet",
         variant === "panel" && "dialog-panel",
-        "w-[calc(100%-2rem)] max-w-lg rounded-(--radius-xl) border border-(--color-border) bg-(--color-surface) p-0 text-(--color-ink-900) shadow-(--shadow-modal)",
+        "w-[calc(100%-2rem)] max-w-lg rounded-(--radius-xl) border border-(--color-mist-300) bg-(--color-surface) p-0 text-(--color-ink-900) shadow-(--shadow-modal)",
         className,
       )}
     >
@@ -120,7 +120,7 @@ interface DialogPanelProps {
 export function DialogPanel({ title, subtitle, onClose, closeLabel, footer, children }: DialogPanelProps) {
   return (
     <div className="flex max-h-[inherit] min-h-[inherit] flex-col">
-      <div className="flex flex-none items-start gap-3 border-b border-(--color-border) px-4 py-3 sm:px-6 sm:py-4">
+      <div className="flex flex-none items-start gap-3 border-b border-(--color-mist-300) px-4 py-3 sm:px-6 sm:py-4">
         <div className="min-w-0 flex-1 pt-1.5">
           <h2 className="text-h3">{title}</h2>
           {subtitle ? <div className="mt-0.5">{subtitle}</div> : null}
@@ -130,7 +130,7 @@ export function DialogPanel({ title, subtitle, onClose, closeLabel, footer, chil
         </button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">{children}</div>
-      <div className="flex-none border-t border-(--color-border) px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
+      <div className="flex-none border-t border-(--color-mist-300) px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
         {footer}
       </div>
     </div>

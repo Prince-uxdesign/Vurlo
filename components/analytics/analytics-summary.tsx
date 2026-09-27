@@ -22,7 +22,7 @@ export function AnalyticsSummary({ metrics, rangeLabel }: { metrics: LinkMetrics
           <dd className="mt-1 text-[26px] font-bold leading-none tracking-tight">{formatCount(metrics.approxUniques)}</dd>
         </div>
       </dl>
-      <p className="mt-4 border-t border-(--color-border) pt-3 text-small text-(--color-muted)">
+      <p className="mt-4 border-t border-(--color-mist-300) pt-3 text-small text-(--color-muted)">
         Clicks count people, not bots. {formatCount(metrics.totalRequests)} total requests
         {automated > 0 ? `, including ${formatCount(automated)} automated ${automated === 1 ? "visit" : "visits"} (bots and link previews)` : ""}.
         {" "}Counts update as visits arrive and can take up to a minute to catch up. Unique visitors are approximate: one person on two devices can count twice.

@@ -12,7 +12,7 @@ const STEPS = [
  */
 export function FirstLinkGuide() {
   return (
-    <section aria-labelledby="guide-title" className="rounded-(--radius-lg) border border-(--color-border) bg-white p-4 sm:p-5">
+    <section aria-labelledby="guide-title" className="rounded-(--radius-lg) border border-(--color-mist-300) bg-white p-4 shadow-2xs sm:p-5">
       <h2 id="guide-title" className="text-h3">What happens next</h2>
       <ul className="mt-3 space-y-3">
         {STEPS.map(({ Icon, text }) => (
@@ -22,7 +22,7 @@ export function FirstLinkGuide() {
           </li>
         ))}
       </ul>
-      <p className="text-small mt-4 border-t border-(--color-border) pt-3 text-(--color-muted)">
+      <p className="text-small mt-4 border-t border-(--color-mist-300) pt-3 text-(--color-muted)">
         You can have up to 50 active links at a time.
       </p>
     </section>

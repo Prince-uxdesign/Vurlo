@@ -8,13 +8,13 @@ import { IconButton } from "@/components/ui/icon-button";
 import { CreateLinkCta } from "./create-link-cta";
 
 const navItems = [
-  { label: "Workflow", href: "#features" },
-  { label: "Analytics", href: "#analytics" },
-  { label: "Creators", href: "#creators" },
-  { label: "Businesses", href: "#business" },
-  { label: "QR codes", href: "#qr-codes" },
-  { label: "Trust", href: "#trust" },
-  { label: "FAQ", href: "#faq" },
+  { label: "Workflow", href: "/#features" },
+  { label: "Analytics", href: "/#analytics" },
+  { label: "Creators", href: "/#creators" },
+  { label: "Businesses", href: "/#business" },
+  { label: "QR codes", href: "/#qr-codes" },
+  { label: "Trust", href: "/#trust" },
+  { label: "FAQ", href: "/#faq" },
 ];
 
 function AccountLink({ isSignedIn, className = "btn-ghost" }: { isSignedIn: boolean; className?: string }) {

@@ -39,7 +39,7 @@ const rows = [
 export function LinkRowsPanel() {
   return (
     <figure className="m-0 overflow-hidden rounded-(--radius-lg) border border-(--color-ink-900) bg-white">
-      <figcaption className="flex items-center justify-between gap-3 border-b border-(--color-border) px-4 py-3">
+      <figcaption className="flex items-center justify-between gap-3 border-b border-(--color-mist-300) px-4 py-3">
         <span className="text-label">Your links</span>
         <span className="text-small text-(--color-muted)">Example data</span>
       </figcaption>
@@ -47,7 +47,7 @@ export function LinkRowsPanel() {
         {rows.map((row) => (
           <li
             key={row.short}
-            className="flex items-center justify-between gap-2.5 border-b border-(--color-border) px-3 py-3 sm:gap-3 sm:px-4 last:border-b-0"
+            className="flex items-center justify-between gap-2.5 border-b border-(--color-mist-300) px-3 py-3 sm:gap-3 sm:px-4 last:border-b-0"
           >
             <div className="min-w-0 flex-1">
               <p className="truncate font-mono text-[13px] font-semibold sm:text-[14px]">{row.short}</p>

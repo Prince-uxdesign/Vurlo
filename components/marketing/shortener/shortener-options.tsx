@@ -27,7 +27,7 @@ export function ShortenerOptions(props: ShortenerOptionsProps) {
   return (
     <div
       id={props.id}
-      className="mt-2 grid gap-5 border-t border-(--color-border) pt-5"
+      className="mt-2 grid gap-5 border-t border-(--color-mist-300) pt-5"
     >
       <div className="grid gap-5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] sm:items-start">
         <AliasField

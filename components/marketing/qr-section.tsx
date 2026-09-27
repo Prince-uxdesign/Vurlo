@@ -125,7 +125,7 @@ export function QrSection() {
 
                 {/* Scannable High-Fidelity QR Card */}
                 <figure className="m-0 overflow-hidden rounded-[18px] border border-(--color-ink-900) bg-white text-(--color-ink-900) shadow-[6px_6px_0_#000]">
-                  <figcaption className="flex items-center justify-between gap-3 border-b border-(--color-border) bg-(--color-mist-100) px-4 py-3">
+                  <figcaption className="flex items-center justify-between gap-3 border-b border-(--color-mist-300) bg-(--color-mist-100) px-4 py-3">
                     <span className="font-mono text-[13px] font-bold text-(--color-ink-900)">
                       {siteConfig.shortLinkHost}/craft-studio
                     </span>

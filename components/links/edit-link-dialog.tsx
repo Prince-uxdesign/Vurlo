@@ -179,7 +179,7 @@ function EditForm({ link, displayUrl, onClose }: Omit<EditLinkDialogProps, "open
           <section aria-labelledby={`alias-h-${link.id}`} className="grid grid-cols-[minmax(0,1fr)] gap-2">
             <h3 id={`alias-h-${link.id}`} className="text-label">Short link</h3>
             {!changingAlias ? (
-              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-(--radius-md) border border-(--color-border) bg-(--color-mist-100) px-3.5 py-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-(--radius-md) border border-(--color-mist-300) bg-(--color-mist-100) px-3.5 py-2.5">
                 <p className="min-w-0 break-all font-mono text-[15px] font-semibold">{displayUrl}</p>
                 <Button variant="ghost" className="-mr-2" onClick={() => { setChangingAlias(true); requestAnimationFrame(() => document.getElementById(`alias-${link.id}`)?.focus()); }}>
                   <Pencil size={16} aria-hidden="true" />
@@ -226,7 +226,7 @@ function EditForm({ link, displayUrl, onClose }: Omit<EditLinkDialogProps, "open
           </div>
 
           {/* UTM: open by default when the link already has values. */}
-          <section aria-label="UTM parameters" className="grid grid-cols-[minmax(0,1fr)] gap-2 border-t border-(--color-border) pt-4">
+          <section aria-label="UTM parameters" className="grid grid-cols-[minmax(0,1fr)] gap-2 border-t border-(--color-mist-300) pt-4">
             <UtmToggle panelId={`utm-${link.id}`} open={showUtm} utm={utm} onToggle={() => setShowUtm((v) => !v)} className="justify-self-start" />
             {showUtm ? (
               <UtmFields

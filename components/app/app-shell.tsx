@@ -15,9 +15,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-50 focus:rounded-(--radius-md) focus:bg-black focus:px-4 focus:py-2 focus:text-white">
         Skip to content
       </a>
-      <header className="sticky top-0 z-40 border-b border-(--color-border) bg-(--color-paper)">
+      <header className="sticky top-0 z-40 border-b border-(--color-mist-300) bg-(--color-paper)">
         <Container className="flex h-14 items-center gap-6 sm:h-16">
-          <Link href="/dashboard" aria-label="Vurlo dashboard" className="inline-flex min-h-11 items-center text-[22px] font-extrabold tracking-tight">
+          <Link href="/dashboard" aria-label="Vurlo dashboard" className="inline-flex min-h-11 items-center text-[22px] font-extrabold tracking-tight text-(--color-ink-900)">
             Vurlo<span className="text-(--color-ember-700)">.</span>
           </Link>
           <AppNav className="hidden sm:block" />
@@ -25,7 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button type="submit" className="btn-ghost">Sign out</button>
           </form>
         </Container>
-        <AppNav className="border-t border-(--color-border) sm:hidden" />
+        <AppNav className="border-t border-(--color-mist-300) sm:hidden" />
       </header>
       <main id="main" className="flex-1 py-6 sm:py-8 md:py-10">
         <Container>{children}</Container>

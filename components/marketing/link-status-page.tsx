@@ -58,10 +58,14 @@ interface StatusShellProps {
 /** Shared frame for every "this can't redirect" page. */
 export function StatusShell({ Icon, label, title, children, actions }: StatusShellProps) {
   return (
-    <div className="flat-ui flex min-h-dvh flex-col">
-      <header className="border-b border-(--color-border)">
+    <div className="flat-ui flex min-h-dvh flex-col bg-(--color-paper)">
+      <header className="border-b border-(--color-mist-300) bg-(--color-paper)">
         <Container className="flex h-16 items-center">
-          <Link href="/" aria-label="Vurlo home" className="inline-flex min-h-11 items-center text-[22px] font-extrabold tracking-tight">
+          <Link
+            href="/"
+            aria-label="Vurlo home"
+            className="inline-flex min-h-11 items-center text-[22px] font-extrabold tracking-tight text-(--color-ink-900)"
+          >
             Vurlo<span className="text-(--color-ember-700)">.</span>
           </Link>
         </Container>
@@ -72,27 +76,27 @@ export function StatusShell({ Icon, label, title, children, actions }: StatusShe
           {/* Phones: stacked. Tablet and up: icon rail + text column, so the
               wider canvas is used deliberately instead of stretching one column. */}
           <div className="grid max-w-2xl gap-6 md:grid-cols-[56px_minmax(0,1fr)] md:gap-x-8">
-            <span className="grid size-14 place-items-center rounded-(--radius-md) border-[1.5px] border-(--color-ink-900) bg-white">
+            <span className="grid size-14 place-items-center rounded-[16px] border border-(--color-mist-300) bg-white text-(--color-ember-700) shadow-sm">
               <Icon size={26} aria-hidden="true" />
             </span>
             <div>
-              <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-(--color-muted)">
+              <p className="font-mono text-[12px] font-bold uppercase tracking-[0.08em] text-(--color-ember-700)">
                 {label}
               </p>
-              <h1 className="mt-2 text-balance text-[30px] font-bold leading-[1.1] tracking-tight sm:text-[38px] md:text-[44px]">
+              <h1 className="mt-2 text-balance text-[32px] font-bold leading-[1.12] tracking-tight text-(--color-ink-900) sm:text-[40px] md:text-[46px]">
                 {title}
               </h1>
-              <div className="text-body-l mt-4 max-w-xl text-(--color-muted)">{children}</div>
+              <div className="text-body-l mt-4 max-w-xl text-(--color-slate-700)">{children}</div>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">{actions}</div>
             </div>
           </div>
         </Container>
       </main>
 
-      <footer className="border-t border-(--color-border) py-6">
+      <footer className="border-t border-(--color-mist-300) py-6">
         <Container>
-          <p className="text-small text-(--color-muted)">
-            Vurlo. Short links that do more.
+          <p className="text-small text-(--color-slate-700)">
+            © {new Date().getFullYear()} Vurlo. Make every link worth clicking.
           </p>
         </Container>
       </footer>

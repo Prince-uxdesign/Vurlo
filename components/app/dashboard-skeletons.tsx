@@ -25,7 +25,7 @@ export function RecentLinksSkeleton() {
   return (
     <div role="status" aria-label="Loading recent links">
       <Bone className="mb-3 h-[44px] w-40" />
-      <ul className="divide-y divide-(--color-border) rounded-(--radius-lg) border border-(--color-ink-900) bg-white">
+      <ul className="divide-y divide-(--color-mist-300) rounded-(--radius-lg) border border-(--color-mist-300) bg-white shadow-2xs">
         {Array.from({ length: 3 }, (_, i) => <LinkRowSkeleton key={i} />)}
       </ul>
     </div>
@@ -34,7 +34,7 @@ export function RecentLinksSkeleton() {
 
 export function ActivitySkeleton() {
   return (
-    <div role="status" aria-label="Loading activity" className="rounded-(--radius-lg) border border-(--color-border) bg-white p-4 sm:p-5">
+    <div role="status" aria-label="Loading activity" className="rounded-(--radius-lg) border border-(--color-mist-300) bg-white p-4 shadow-2xs sm:p-5">
       <Bone className="h-6 w-40" />
       <Bone className="mt-4 h-12 w-full" />
       <Bone className="mt-2 h-12 w-full" />
