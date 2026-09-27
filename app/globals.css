@@ -26,6 +26,18 @@
   --color-success-700: #15803d;
   --color-danger-700: #b91c1c;
 
+  /* Editorial section tints (calm, warm, distinct per section) */
+  --color-tint-yellow: #fef8e7;
+  --color-tint-yellow-border: #f6e8b8;
+  --color-tint-lilac: #f3eefa;
+  --color-tint-lilac-border: #e2daf0;
+  --color-tint-peach: #faf0eb;
+  --color-tint-peach-border: #f3ded4;
+  --color-tint-blue: #eef4fa;
+  --color-tint-blue-border: #d7e4f2;
+  --color-tint-mint: #eef7f2;
+  --color-tint-mint-border: #d0ebdf;
+
   /* Semantic aliases (map to the palette above — no new hues) */
   --color-background: #fbfaf8;
   --color-foreground: #000000;

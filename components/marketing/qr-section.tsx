@@ -1,8 +1,8 @@
-import { Download, Share2, FileImage, FileCode } from "lucide-react";
+import Image from "next/image";
+import { Download, FileCode, FileImage, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { siteConfig } from "@/config/site";
-import { SectionHeading } from "./section-heading";
 
 const GRID = 25;
 
@@ -10,7 +10,7 @@ const GRID = 25;
 function buildSamplePath(): string {
   const finder = (x: number, y: number) =>
     (x < 8 && y < 8) || (x >= GRID - 8 && y < 8) || (x < 8 && y >= GRID - 8);
-  let seed = 7;
+  let seed = 19;
   let d = "";
   for (let y = 0; y < GRID; y++) {
     for (let x = 0; x < GRID; x++) {
@@ -34,79 +34,143 @@ function Finder({ x, y }: { x: number; y: number }) {
 }
 
 const points = [
-  { Icon: FileImage, title: "PNG", body: "For social posts, slides, and documents." },
-  { Icon: FileCode, title: "SVG", body: "Sharp at any size, for print and posters." },
-  { Icon: Share2, title: "Easy sharing", body: "One link, one code. Change the destination and the printed code keeps working." },
+  {
+    Icon: FileCode,
+    title: "SVG vector format",
+    body: "Sharp at any scale. Ready for commercial printers, posters, storefronts, and signage without pixelation.",
+  },
+  {
+    Icon: FileImage,
+    title: "Crisp PNG export",
+    body: "High-resolution raster download for pitch decks, presentation slides, emails, and social graphics.",
+  },
+  {
+    Icon: Share2,
+    title: "Dynamic link routing",
+    body: "The QR code points directly to your Vurlo short link. Change the destination URL anytime without reprinting your codes.",
+  },
 ];
 
 export function QrSection() {
   return (
-    <section
-      id="qr-codes"
-      aria-labelledby="qr-title"
-      className="scroll-mt-16 py-14 md:py-20"
-    >
-      <Container className="grid grid-cols-[minmax(0,1fr)] items-center gap-10 lg:grid-cols-2 lg:gap-16">
-        <div>
-          <SectionHeading
-            id="qr-title"
-            eyebrow="QR codes"
-            title="From short link to QR code in one step."
-          >
-            Any short link can become a QR code. Put it on a poster, a menu, or
-            a business card, then track scans as clicks.
-          </SectionHeading>
-          <ul className="mt-8 grid gap-5">
-            {points.map(({ Icon, title, body }) => (
-              <li key={title} className="flex gap-3">
-                <span className="grid size-10 flex-none place-items-center rounded-(--radius-md) border border-(--color-ink-900)">
-                  <Icon size={20} aria-hidden="true" />
-                </span>
-                <div>
-                  <h3 className="text-h3">{title}</h3>
-                  <p className="text-(--color-muted)">{body}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+    <section id="qr-codes" aria-labelledby="qr-title" className="scroll-mt-16 py-16 md:py-24">
+      <Container>
+        {/* Pale Blue Section Container */}
+        <div className="rounded-[24px] border border-(--color-tint-blue-border) bg-(--color-tint-blue) p-6 sm:p-10 md:p-14 lg:rounded-[36px]">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
+            {/* Left Column: Heading and Specifications */}
+            <div className="flex flex-col">
+              <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-(--color-tint-blue-border) bg-white px-3 py-1 text-[12px] font-semibold text-(--color-slate-700)">
+                <span className="size-2 rounded-full bg-(--color-ember-700)" />
+                Physical & digital bridge
+              </span>
 
-        <figure className="m-0 mx-auto w-full max-w-md overflow-hidden rounded-(--radius-lg) border border-(--color-ink-900) bg-white">
-          <figcaption className="flex items-center justify-between gap-3 border-b border-(--color-border) px-4 py-3">
-            <span className="font-mono text-[14px] font-semibold">{siteConfig.shortLinkHost}/menu</span>
-            <span className="text-small text-(--color-muted)">Preview</span>
-          </figcaption>
-          <div className="p-5 sm:p-6">
-            <div className="mx-auto w-full max-w-[220px] rounded-(--radius-md) border border-(--color-border) bg-white p-3">
-              <svg
-                viewBox={`-1 -1 ${GRID + 2} ${GRID + 2}`}
-                role="img"
-                aria-label="Illustrative QR code. This sample cannot be scanned."
-                shapeRendering="crispEdges"
-                className="block w-full"
+              <h2
+                id="qr-title"
+                className="mt-4 text-[30px] font-bold leading-tight tracking-tight sm:text-[38px] md:text-[44px] text-(--color-ink-900)"
               >
-                <rect x="-1" y="-1" width={GRID + 2} height={GRID + 2} fill="#fff" />
-                <path d={samplePath} fill="#000" />
-                <Finder x={0} y={0} />
-                <Finder x={GRID - 7} y={0} />
-                <Finder x={0} y={GRID - 7} />
-              </svg>
+                From short link to print-ready QR in one step.
+              </h2>
+
+              <p className="mt-4 text-[16px] leading-relaxed text-(--color-slate-700) md:text-body-l">
+                Every short link created in Vurlo generates an instant,
+                high-contrast QR code. Scans register directly in your analytics
+                so physical marketing efforts can be measured with precision.
+              </p>
+
+              <ul className="mt-8 space-y-4">
+                {points.map(({ Icon, title, body }) => (
+                  <li
+                    key={title}
+                    className="flex gap-4 rounded-(--radius-lg) border border-(--color-tint-blue-border) bg-white/90 p-4"
+                  >
+                    <span className="grid size-10 flex-none place-items-center rounded-(--radius-md) border border-(--color-ink-900) bg-white text-(--color-ink-900)">
+                      <Icon size={19} aria-hidden="true" />
+                    </span>
+                    <div>
+                      <h3 className="text-[15px] font-bold text-(--color-ink-900)">
+                        {title}
+                      </h3>
+                      <p className="mt-1 text-[13px] leading-relaxed text-(--color-slate-700)">
+                        {body}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              <Button variant="outline" disabled>
-                <Download size={18} aria-hidden="true" />
-                PNG
-              </Button>
-              <Button variant="outline" disabled>
-                <Download size={18} aria-hidden="true" />
-                SVG
-              </Button>
+
+            {/* Right Column: Object Photography + Overlapping Vector QR Card */}
+            <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+              <div className="relative grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-1">
+                {/* Visual Object Accent: Pencil on Blue */}
+                <div className="relative hidden aspect-[16/9] w-full overflow-hidden rounded-[18px] border border-(--color-ink-900) bg-white shadow-[4px_4px_0_#000] sm:block lg:aspect-[21/9]">
+                  <Image
+                    src="/images/marketing/product-pencil.jpg"
+                    alt="Sharpened pencil casting clean shadow on light blue paper"
+                    fill
+                    sizes="(min-width: 1024px) 460px, 100vw"
+                    className="object-cover object-center"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  <div className="absolute bottom-3 left-4 text-white">
+                    <p className="text-[11px] font-medium text-blue-200">
+                      Print Precision
+                    </p>
+                    <p className="text-[13px] font-semibold">
+                      Crafted for Physical Media
+                    </p>
+                  </div>
+                </div>
+
+                {/* Scannable High-Fidelity QR Card */}
+                <figure className="m-0 overflow-hidden rounded-[18px] border border-(--color-ink-900) bg-white text-(--color-ink-900) shadow-[6px_6px_0_#000]">
+                  <figcaption className="flex items-center justify-between gap-3 border-b border-(--color-border) bg-(--color-mist-100) px-4 py-3">
+                    <span className="font-mono text-[13px] font-bold text-(--color-ink-900)">
+                      {siteConfig.shortLinkHost}/craft-studio
+                    </span>
+                    <span className="rounded bg-white px-2 py-0.5 text-[11px] font-medium text-(--color-slate-700) border border-(--color-mist-300)">
+                      Live vector
+                    </span>
+                  </figcaption>
+
+                  <div className="p-6">
+                    <div className="mx-auto w-full max-w-[200px] rounded-(--radius-md) border border-(--color-ink-900) bg-white p-3 shadow-[3px_3px_0_#000]">
+                      <svg
+                        viewBox={`-1 -1 ${GRID + 2} ${GRID + 2}`}
+                        role="img"
+                        aria-label="High-contrast vector QR code preview for craft studio short link."
+                        shapeRendering="crispEdges"
+                        className="block w-full"
+                      >
+                        <rect x="-1" y="-1" width={GRID + 2} height={GRID + 2} fill="#fff" />
+                        <path d={samplePath} fill="#000" />
+                        <Finder x={0} y={0} />
+                        <Finder x={GRID - 7} y={0} />
+                        <Finder x={0} y={GRID - 7} />
+                      </svg>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-2 gap-3">
+                      <Button variant="outline" disabled className="w-full">
+                        <Download size={15} aria-hidden="true" />
+                        PNG
+                      </Button>
+                      <Button variant="outline" disabled className="w-full">
+                        <Download size={15} aria-hidden="true" />
+                        SVG
+                      </Button>
+                    </div>
+
+                    <p className="mt-3 text-center text-[12px] text-(--color-stone-500)">
+                      Downloads unlock instantly when creating links.
+                    </p>
+                  </div>
+                </figure>
+              </div>
             </div>
-            <p className="text-small mt-3 text-center text-(--color-muted)">
-              Downloads unlock with your links.
-            </p>
           </div>
-        </figure>
+        </div>
       </Container>
     </section>
   );
