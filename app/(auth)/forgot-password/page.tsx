@@ -11,18 +11,10 @@ export default function ForgotPasswordPage() {
   return (
     <AuthShell
       title="Reset your password"
-      description="Enter your registered account email and we'll send you a secure link to choose a new password."
-      switchLink={{ href: "/login", label: "Sign in" }}
-      imageSrc="/images/auth/auth-architecture.png"
-      imageAlt="Architectural facade with curved balconies against blue sky"
-      imageTagline="Account security & recovery."
-      imageSubtag="Password reset links expire in 60 minutes and can only be used once to keep your account protected."
-      floatingCard={{
-        slug: "vurlo.link/auth-recovery",
-        subtitle: "Single-use · 60m expiry",
-        status: "Secure",
-      }}
-      badge="Password recovery"
+      description="Enter your email and we'll send you a recovery link to choose a new password."
+      imageSrc="/images/auth/auth-signup-editorial.jpg"
+      imageAlt="Modern architecture studio portrait"
+      defaultTestimonialIndex={2}
     >
       <ForgotPasswordForm />
     </AuthShell>

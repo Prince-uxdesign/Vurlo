@@ -15,12 +15,9 @@ export default async function ResetPasswordPage() {
       <AuthShell
         title="This link has expired"
         description="Reset links work once and expire after 60 minutes for security."
-        switchLink={{ href: "/login", label: "Sign in" }}
-        imageSrc="/images/auth/auth-architecture.png"
-        imageAlt="Architectural facade against clear blue sky"
-        imageTagline="Expired security link."
-        imageSubtag="For your account protection, reset links are single-use and expire within one hour."
-        badge="Link expired"
+        imageSrc="/images/auth/auth-signin-editorial.jpg"
+        imageAlt="Editorial studio lighting portrait"
+        defaultTestimonialIndex={0}
       >
         <Link href="/forgot-password" className="btn-primary w-full justify-center">
           Request a new link
@@ -41,12 +38,9 @@ export default async function ResetPasswordPage() {
     <AuthShell
       title="Choose a new password"
       description="Choose a strong password of at least 8 characters. You'll be signed out of other active sessions."
-      switchLink={{ href: "/login", label: "Sign in" }}
-      imageSrc="/images/auth/auth-architecture.png"
-      imageAlt="Architectural facade against clear blue sky"
-      imageTagline="Protecting your account."
-      imageSubtag="Once saved, your new password takes effect immediately and updates across all devices."
-      badge="Set new password"
+      imageSrc="/images/auth/auth-signin-editorial.jpg"
+      imageAlt="Editorial studio lighting portrait"
+      defaultTestimonialIndex={1}
     >
       <ResetPasswordForm />
     </AuthShell>

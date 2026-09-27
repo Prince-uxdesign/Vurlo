@@ -18,18 +18,10 @@ export default async function LoginPage({
   return (
     <AuthShell
       title="Welcome back"
-      description="Sign in to manage your short links, edit destinations, and view honest analytics."
-      switchLink={{ href: "/signup", label: "Create account" }}
-      imageSrc="/images/auth/auth-signin.jpg"
-      imageAlt="Creator using smartphone in urban environment"
-      imageTagline="Short. Share. Understand."
-      imageSubtag="Every link you create is kept safely under your account with instant 307 routing and zero tracking cookies."
-      floatingCard={{
-        slug: "vurlo.link/studio-drop",
-        subtitle: "Active · 307 direct route",
-        status: "Active",
-      }}
-      badge="Sign in"
+      description="Welcome back! Please enter your details."
+      imageSrc="/images/auth/auth-signin-editorial.jpg"
+      imageAlt="Creative founder portrait in editorial studio setting"
+      defaultTestimonialIndex={0}
     >
       <LoginForm next={safeNextPath(next)} />
     </AuthShell>

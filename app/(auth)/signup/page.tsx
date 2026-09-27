@@ -10,19 +10,11 @@ export const metadata: Metadata = {
 export default function SignupPage() {
   return (
     <AuthShell
-      title="Start making every link count"
-      description="Create an account to keep your links forever, claim branded aliases, and download vector QR codes."
-      switchLink={{ href: "/login", label: "Sign in" }}
-      imageSrc="/images/auth/auth-signup.jpg"
-      imageAlt="Creative entrepreneur reviewing work over coffee"
-      imageTagline="Start making every link count."
-      imageSubtag="Claim custom aliases, monitor honest post-click traffic, and keep all your links organized in one place."
-      floatingCard={{
-        slug: "vurlo.link/creator-hub",
-        subtitle: "Active · Branded custom alias",
-        status: "Active",
-      }}
-      badge="Create free account"
+      title="Create an account"
+      description="Start making every link count. Free forever, no credit card required."
+      imageSrc="/images/auth/auth-signup-editorial.jpg"
+      imageAlt="Creative strategist in modern architecture studio"
+      defaultTestimonialIndex={1}
     >
       <SignupForm />
     </AuthShell>
