@@ -163,9 +163,9 @@ export function ManageLinkSection() {
   const label: Record<(typeof order)[number], string> = { enable: "Enable link", unarchive: "Restore link", disable: "Disable link", archive: "Archive link" };
 
   return (
-    <section aria-labelledby="manage-title" className="rounded-(--radius-lg) border border-(--color-border) bg-white">
+    <section aria-labelledby="manage-title" className="overflow-hidden rounded-2xl border border-(--color-mist-300) bg-white shadow-2xs">
       <h2 id="manage-title" className="text-h3 p-4 sm:px-5">Manage link</h2>
-      <ul className="divide-y divide-(--color-border) border-t border-(--color-border)">
+      <ul className="divide-y divide-(--color-mist-200) border-t border-(--color-mist-200)">
         {actions.map((a) => (
           <li key={a} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 p-4 sm:px-5">
             <p className="text-small min-w-0 flex-[1_1_14rem] text-(--color-muted)">{MANAGE_COPY[a]}</p>

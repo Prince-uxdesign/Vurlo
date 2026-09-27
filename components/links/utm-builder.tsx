@@ -94,9 +94,15 @@ export function UtmFields({
   const preview = destination && hasValues && !Object.values(errors).some(Boolean) ? safeTrackedUrl(destination, utm) : null;
 
   return (
-    <fieldset id={panelId} className={cn("@container grid min-w-0 gap-4", className)}>
+    <fieldset
+      id={panelId}
+      className={cn(
+        "@container grid min-w-0 gap-4 rounded-xl border border-(--color-mist-300)/80 bg-(--color-paper)/80 p-4 sm:p-5",
+        className
+      )}
+    >
       <legend className="sr-only">UTM parameters</legend>
-      <p className="field-helper">
+      <p className="text-[13px] text-(--color-stone-500)">
         Optional. Added to the destination so your analytics can tell where visits came from.
       </p>
 

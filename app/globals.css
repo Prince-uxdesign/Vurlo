@@ -581,19 +581,22 @@ video {
   color: #6f675d; /* ~5:1 on white; design-system stone-500 is 3.3:1 */
 }
 
-/* The URL field is the page's main affordance: give it a firm edge. */
+/* The URL field is the page's main affordance: clean, high-contrast border. */
 .shortener-panel .input {
-  border-color: var(--color-ink-900);
+  border-color: var(--color-mist-300);
+}
+.shortener-panel .input:focus-visible {
+  border-color: transparent;
 }
 
-/* Shortener + auth panels: hard offset edge instead of a soft glow. */
+/* Shortener + product panels: refined border and crisp subtle elevation. */
 .shortener-panel,
 .auth-panel {
   padding: 20px;
-  border: 1.5px solid var(--color-ink-900);
+  border: 1px solid var(--color-mist-300);
   border-radius: var(--radius-lg);
   background: #ffffff;
-  box-shadow: 5px 5px 0 var(--color-ink-900);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 @media (min-width: 640px) {
   .shortener-panel,

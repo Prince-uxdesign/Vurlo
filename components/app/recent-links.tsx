@@ -33,12 +33,15 @@ export async function RecentLinks({ supabase, rpc }: { supabase: UserClient; rpc
         </Link>
       </div>
       {items.length === 0 ? (
-        <p className="rounded-(--radius-lg) border border-(--color-border) bg-white p-5 text-(--color-muted)">
+        <p className="rounded-2xl border border-(--color-mist-300) bg-white p-5 text-(--color-muted) shadow-2xs">
           Your newest links show here. Everything you have is archived:{" "}
-          <Link href="/links?status=archived" className="font-semibold text-(--color-ink-900) underline underline-offset-2">see archived links</Link>.
+          <Link href="/links?status=archived" className="font-semibold text-(--color-ink-900) underline underline-offset-2 hover:text-(--color-ember-700)">
+            see archived links
+          </Link>
+          .
         </p>
       ) : (
-        <ul className="divide-y divide-(--color-border) rounded-(--radius-lg) border border-(--color-ink-900) bg-white">
+        <ul className="divide-y divide-(--color-mist-200) overflow-hidden rounded-2xl border border-(--color-mist-300) bg-white shadow-2xs">
           {items.map((link) => (
             <LinkRow key={link.id} link={link} now={now} clicks={clicks?.get(link.id) ?? null} />
           ))}

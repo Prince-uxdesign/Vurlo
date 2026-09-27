@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Suspense } from "react";
 import { AccountSummary } from "@/components/app/account-summary";
 import { ClicksOverview } from "@/components/app/clicks-overview";
-import { ActivitySkeleton, ClicksOverviewSkeleton, RecentLinksSkeleton } from "@/components/app/dashboard-skeletons";
+import {
+  ActivitySkeleton,
+  ClicksOverviewSkeleton,
+  RecentLinksSkeleton,
+} from "@/components/app/dashboard-skeletons";
 import { FirstLinkGuide } from "@/components/app/first-link-guide";
 import { NeedsAttention } from "@/components/app/needs-attention";
 import { QuickCreate } from "@/components/app/quick-create";
@@ -21,18 +26,40 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-const Title = () => <h1 className="text-[30px] font-bold leading-tight tracking-tight md:text-[38px]">Dashboard</h1>;
+function DashboardHeader() {
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-(--color-mist-300) bg-white px-3 py-1 text-[12px] font-semibold text-(--color-slate-700)">
+          <span className="size-2 rounded-full bg-(--color-ember-700)" aria-hidden="true" />
+          <span>Command center</span>
+        </div>
+        <h1 className="mt-2 text-[28px] font-bold leading-tight tracking-tight text-(--color-ink-900) sm:text-[34px] md:text-[38px]">
+          Good to have you here.
+        </h1>
+        <p className="mt-1 text-[15px] text-(--color-slate-700)">
+          Create, share, and understand every link.
+        </p>
+      </div>
+
+      {/* Small colorful architectural visual treatment (per Prompt 5 guidelines) */}
+      <div className="relative hidden size-20 flex-none overflow-hidden rounded-2xl border border-(--color-mist-300) shadow-2xs sm:flex md:size-24">
+        <Image
+          src="/images/app/dashboard-texture.jpg"
+          alt="Architectural texture accent"
+          fill
+          sizes="96px"
+          className="object-cover"
+        />
+      </div>
+    </div>
+  );
+}
 
 /**
  * The command center, in priority order: create a link, the account at a
  * glance, what's happening (clicks), recent links, then what needs a look
- * and recent activity. Only the counts block the first paint; every section
- * below the fold streams in from its own aggregate query, so nothing loads
- * events and a slow or failed section never holds up the rest.
- *
- * QuickCreate keeps the same place in the tree for new and populated
- * accounts, so creating a first link (which refreshes into the populated
- * layout) keeps its success panel on screen.
+ * and recent activity.
  */
 export default async function DashboardPage() {
   const user = await requireUser("/dashboard");
@@ -40,13 +67,18 @@ export default async function DashboardPage() {
 
   let stats;
   let totalClicks: number | null = null;
-  let defaultExpiration: Awaited<ReturnType<typeof getSettingsProfile>>["defaultExpiration"] | undefined;
+  let defaultExpiration:
+    | Awaited<ReturnType<typeof getSettingsProfile>>["defaultExpiration"]
+    | undefined;
+
   try {
     if (!supabase) throw new Error("not configured");
     const rpcClient = asRpcClient(supabase);
     const [s, clicks, profile] = await Promise.all([
       getMyLinkStats(supabase),
-      analyticsGuard.load(user.id, "account-clicks", ANALYTICS_TTL.account, () => getAccountClicks(rpcClient)),
+      analyticsGuard.load(user.id, "account-clicks", ANALYTICS_TTL.account, () =>
+        getAccountClicks(rpcClient)
+      ),
       getSettingsProfile(supabase, user.id),
     ]);
     stats = s;
@@ -55,11 +87,14 @@ export default async function DashboardPage() {
   } catch (error) {
     logServerError("dashboard_load_failed", error);
   }
+
   if (!supabase || !stats) {
     return (
       <>
-        <Title />
-        <div className="mt-6"><ResultsError /></div>
+        <DashboardHeader />
+        <div className="mt-6">
+          <ResultsError />
+        </div>
       </>
     );
   }
@@ -69,15 +104,19 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <Title />
-      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] items-start gap-6 sm:mt-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-8">
+      <DashboardHeader />
+      <div className="mt-6 grid grid-cols-[minmax(0,1fr)] items-start gap-6 sm:mt-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-8">
         <QuickCreate
           key="create"
           limitReached={stats.active >= ACTIVE_LINK_LIMIT}
           title={isNew ? "Create your first Vurlo link" : undefined}
           defaultExpiration={defaultExpiration}
         />
-        {isNew ? <FirstLinkGuide key="aside" /> : <AccountSummary key="aside" stats={stats} totalClicks={totalClicks} />}
+        {isNew ? (
+          <FirstLinkGuide key="aside" />
+        ) : (
+          <AccountSummary key="aside" stats={stats} totalClicks={totalClicks} />
+        )}
 
         {isNew ? null : (
           <>

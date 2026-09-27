@@ -41,7 +41,7 @@ export async function LinksResults({ params, totalLinks }: { params: LinkListPar
   return (
     <section aria-label="Your links">
       <h2 className="sr-only">Your links</h2>
-      <ul className="divide-y divide-(--color-border) rounded-(--radius-lg) border border-(--color-ink-900) bg-white">
+      <ul className="divide-y divide-(--color-mist-200) overflow-hidden rounded-2xl border border-(--color-mist-300) bg-white shadow-2xs">
         {page.items.map((link) => (
           <LinkRow key={link.id} link={link} now={now} clicks={clicks?.get(link.id) ?? null} />
         ))}

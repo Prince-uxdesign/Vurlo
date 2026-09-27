@@ -133,7 +133,7 @@ export function LinkSettings({ link, displayUrl, now }: { link: LinkListItem; di
   const target = finalUrl(link);
 
   return (
-    <section aria-labelledby="settings-title" className="@container rounded-(--radius-lg) border border-(--color-border) bg-white">
+    <section aria-labelledby="settings-title" className="@container overflow-hidden rounded-2xl border border-(--color-mist-300) bg-white shadow-2xs">
       <div className="flex items-center justify-between gap-3 p-4 sm:px-5">
         <h2 id="settings-title" className="text-h3">Link settings</h2>
         <EditLinkButton className="btn-compact">Edit</EditLinkButton>

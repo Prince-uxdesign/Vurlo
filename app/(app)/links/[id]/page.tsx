@@ -98,9 +98,17 @@ export default async function LinkDetailPage({
       <LinkStatusNotice link={link} now={now} />
 
       <div className="mt-8 grid grid-cols-[minmax(0,1fr)] items-start gap-8 lg:mt-10 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem] xl:gap-10">
-        <section aria-labelledby="performance-title" className="min-w-0">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 id="performance-title" className="text-h2">Performance</h2>
+        <section
+          aria-labelledby="performance-title"
+          className="min-w-0 rounded-3xl border border-purple-100/80 bg-[#f9f7fd] p-5 sm:p-7 md:p-8 shadow-2xs"
+        >
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="size-2 rounded-full bg-(--color-ember-700)" aria-hidden="true" />
+              <h2 id="performance-title" className="text-[22px] font-bold text-(--color-ink-900)">
+                Performance
+              </h2>
+            </div>
             <PresetSwitcher linkId={link.id} preset={preset} />
           </div>
           <Suspense key={preset} fallback={<AnalyticsSkeleton />}>
